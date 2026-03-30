@@ -1,64 +1,150 @@
 import styled from 'styled-components';
 
 export const Container = styled.div`
-  display: flex; flex-direction: column; gap: 32px;
+  display: flex; 
+  flex-direction: column; 
+  align-items: center; /* Centraliza o Header e o Content horizontalmente */
+  gap: 32px; 
+  max-width: 1200px; 
+  margin: 0 auto; 
+  padding: 40px 20px;
 `;
 
 export const Header = styled.header`
-  display: flex; align-items: center; gap: 16px;
-  .icon-bg { background: var(--primary); padding: 12px; border-radius: 12px; color: white; display: flex; font-size: 24px; }
-  h2 { color: white; } p { color: #94a3b8; }
+  display: flex; 
+  align-items: center; 
+  gap: 16px;
+  width: 100%;
+  max-width: 800px; /* Alinha a largura com o card centralizado */
+
+  .icon-bg { 
+    background: #0087ff; 
+    padding: 12px; 
+    border-radius: 12px; 
+    color: white; 
+    display: flex; 
+    font-size: 24px; 
+  }
+  
+  h2 { color: white; margin: 0; font-size: 28px; } 
+  p { color: #94a3b8; margin: 4px 0 0 0; }
 `;
 
 export const Content = styled.div`
-  display: grid; grid-template-columns: 1fr 300px; gap: 32px;
-  @media (max-width: 900px) { grid-template-columns: 1fr; }
+  /* Alterado de GRID para FLEX para facilitar a centralização única */
+  display: flex; 
+  flex-direction: column;
+  align-items: center; 
+  gap: 32px;
+  width: 100%;
 `;
 
 export const ProfileCard = styled.div`
-  background: var(--sidebar); border: 1px solid #1e293b; padding: 32px; border-radius: 16px;
-  
+  background: #1e293b; 
+  border: 1px solid #334155; 
+  padding: 32px; 
+  border-radius: 16px;
+  width: 100%;
+  max-width: 800px; /* Define a largura máxima do card centralizado */
+
   .card-header {
-    display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;
-    h3 { color: white; }
+    display: flex; 
+    justify-content: space-between; 
+    align-items: center; 
+    margin-bottom: 30px;
+
+    h3 { color: white; margin: 0; }
+    
+    .actions { display: flex; gap: 12px; }
+    
     button { 
-      background: transparent; border: 1px solid var(--primary); color: var(--primary);
-      padding: 8px 16px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; gap: 8px;
+      padding: 8px 20px; 
+      border-radius: 8px; 
+      cursor: pointer; 
+      display: flex; 
+      align-items: center; 
+      gap: 8px; 
+      font-weight: 600; 
       transition: all 0.2s;
-      &:hover { background: var(--primary); color: white; }
+
+      &.edit-btn { 
+        background: transparent; 
+        border: 1px solid #0087ff; 
+        color: #0087ff; 
+        &:hover { background: #0087ff; color: white; } 
+      }
+      &.save-btn { 
+        background: #0087ff; 
+        border: 1px solid #0087ff; 
+        color: white; 
+        &:hover { filter: brightness(1.2); } 
+      }
+      &.cancel-btn { 
+        background: transparent; 
+        border: 1px solid #f75a68; 
+        color: #f75a68; 
+        &:hover { background: #f75a68; color: white; } 
+      }
     }
   }
 `;
 
 export const InfoGroup = styled.div`
-  display: grid; grid-template-columns: 1fr 1fr; gap: 24px;
+  display: grid; 
+  grid-template-columns: 1fr 1fr; 
+  gap: 24px;
+
   @media (max-width: 600px) { grid-template-columns: 1fr; }
 
   .field {
-    display: flex; flex-direction: column; gap: 8px;
-    label { color: #94a3b8; font-size: 14px; display: flex; align-items: center; gap: 6px; }
-    p { color: white; font-size: 16px; font-weight: 500; }
-    input, textarea {
-      background: #0f172a; border: 1px solid #1e293b; border-radius: 8px;
-      padding: 10px; color: white; outline: none; font-size: 15px;
-      &:focus { border-color: var(--primary); }
+    display: flex; 
+    flex-direction: column; 
+    gap: 8px;
+
+    label { color: #94a3b8; font-size: 13px; display: flex; align-items: center; gap: 6px; }
+    
+    p { 
+      color: white; 
+      font-size: 15px; 
+      margin: 0; 
+      background: #0f172a; 
+      padding: 12px; 
+      border-radius: 8px; 
+      border: 1px solid transparent;
+      &.disabled-field { color: #64748b; background: rgba(0,0,0,0.1); }
+    }
+
+    input, textarea { 
+      background: #0f172a; 
+      border: 1px solid #334155; 
+      border-radius: 8px; 
+      padding: 12px; 
+      color: white; 
+      outline: none;
+      &:focus { border-color: #0087ff; }
     }
   }
+  .full-width { grid-column: 1 / -1; }
 `;
 
+/* Se você decidir manter o SecurityCard, ele agora aparecerá ABAIXO do ProfileCard, também centralizado */
 export const SecurityCard = styled.div`
-  background: #1e293b; padding: 24px; border-radius: 16px; height: fit-content;
-  h3 { color: white; margin-bottom: 8px; }
-  p { color: #94a3b8; font-size: 14px; margin-bottom: 16px; }
-  
-  .secondary-btn {
-    width: 100%; padding: 12px; background: #334155; border: none; color: white;
-    border-radius: 8px; font-weight: bold; cursor: pointer; margin-bottom: 24px;
-    &:hover { background: #475569; }
-  }
+  background: #1e293b; 
+  padding: 32px; 
+  border-radius: 16px; 
+  border: 1px solid #334155;
+  width: 100%;
+  max-width: 800px;
 
-  .account-status {
-    border-top: 1px solid #334155; padding-top: 16px; display: flex; justify-content: space-between;
-    span { color: #94a3b8; font-size: 14px; }
+  h3 { color: white; margin-bottom: 12px; font-size: 18px; }
+  p { color: #94a3b8; font-size: 14px; margin-bottom: 24px; line-height: 1.6; }
+  
+  .account-status { 
+    border-top: 1px solid #334155; 
+    padding-top: 20px; 
+    display: flex; 
+    justify-content: space-between;
+    span { color: #94a3b8; }
+    span:last-child { color: #0087ff; font-weight: bold; }
   }
 `;

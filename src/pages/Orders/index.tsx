@@ -1,55 +1,67 @@
 import { useEffect, useState } from 'react';
-import { FiPackage, FiCheckCircle, FiClock, FiShoppingBag } from 'react-icons/fi';
+import { 
+  FiPackage, 
+  FiCheckCircle, 
+  FiClock, 
+  FiShoppingBag, 
+  FiChevronLeft, 
+  FiChevronRight 
+} from 'react-icons/fi';
 import api from '../../services/api';
 import * as S from './styles';
 
-interface OrderItem {
-  id: number;
-  name: string;
-  image_url: string;
-  price: number;
-  quantity: number;
-  size: string;
-}
-
-interface Order {
-  id: number;
-  createdAt: string;
-  status: string;
-  total: number;
-  items: OrderItem[]; // Mudamos para uma lista de itens
-}
-
 export function Orders() {
-  const [orders, setOrders] = useState<Order[]>([]);
+  const [orders, setOrders] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
 
-  useEffect(() => {
-    async function loadOrders() {
-      try {
-        const response = await api.get('/orders');
-        // Se o seu back retornar o array direto:
-        setOrders(response.data);
-      } catch (err) {
-        console.error("Erro ao carregar pedidos");
-        // Fallback para teste visual
-        setOrders([
-          {
-            id: 1024,
-            createdAt: new Date().toISOString(),
-            status: 'completed',
-            total: 179.80,
-            items: [
-              { id: 1, name: 'Camiseta Code Master', image_url: 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?q=80&w=500', price: 89.90, quantity: 2, size: 'M' }
-            ]
-          }
-        ]);
-      } finally {
-        setLoading(false);
-      }
+  async function loadOrders() {
+    setLoading(true);
+    try {
+      // Faz a chamada para a API
+      const response = await api.get(`/orders?page=${page}`);
+      
+      /**
+       * LÓGICA DE COMPATIBILIDADE (HÍBRIDA):
+       * Se o back-end enviar um Array direto, usamos 'response.data'.
+       * Se o back-end enviar um Objeto { orders: [...] }, usamos 'response.data.orders'.
+       */
+      const dataFromServer = response.data;
+      const rawOrders = Array.isArray(dataFromServer) 
+        ? dataFromServer 
+        : (dataFromServer.orders || []);
+
+      // Define o total de páginas (se o back não enviar, assume 1)
+      const totalP = dataFromServer.totalPages || 1;
+      setTotalPages(totalP);
+
+      // Formatação dos dados para a interface
+      const formatted = rawOrders.map((o: any) => ({
+        id: o.id,
+        createdAt: o.createdAt,
+        status: o.status,
+        total: Number(o.totalValue),
+        // Proteção para o nome da relação: tenta buscar em OrderItems ou orderItems
+        items: (o.OrderItems || o.orderItems || []).map((i: any) => ({
+          name: i.Product?.name || 'Produto indisponível',
+          image: i.Product?.image_url || 'https://via.placeholder.com/150'
+        }))
+      }));
+
+      setOrders(formatted);
+    } catch (err) {
+      console.error("Erro ao carregar pedidos:", err);
+      setOrders([]);
+    } finally {
+      setLoading(false);
     }
-    loadOrders();
-  }, []);
+  }
+
+  // Recarrega sempre que a página mudar
+  useEffect(() => { 
+    loadOrders(); 
+  }, [page]);
 
   return (
     <S.Container>
@@ -57,46 +69,77 @@ export function Orders() {
         <div className="icon-bg"><FiPackage /></div>
         <div>
           <h2>Meus Pedidos</h2>
-          <p>Histórico de compras sincronizado</p>
+          <p>Exibindo página {page} de {totalPages}</p>
         </div>
       </S.Header>
 
       <S.OrderList>
-        {orders.length === 0 && !loading ? (
-          <div style={{ textAlign: 'center', padding: '40px', color: '#94a3b8' }}>
-            <FiShoppingBag size={40} style={{ marginBottom: '16px', opacity: 0.5 }} />
-            <p>Você ainda não realizou nenhum pedido.</p>
+        {loading ? (
+          <p style={{ textAlign: 'center', padding: '20px' }}>Carregando seus pedidos...</p>
+        ) : orders.length === 0 ? (
+          <div style={{ textAlign: 'center', padding: '50px' }}>
+            <FiShoppingBag size={50} color="#333" />
+            <p style={{ marginTop: '10px', color: '#666' }}>Você ainda não realizou nenhum pedido.</p>
           </div>
         ) : (
           orders.map(order => (
             <S.OrderCard key={order.id}>
-              {/* Mostra a imagem do primeiro item do pedido como capa */}
-              <img src={order.items[0]?.image_url} alt="Pedido" />
+              {/* Mostra a imagem do primeiro item do pedido */}
+              <img 
+                src={order.items[0]?.image} 
+                alt={order.items[0]?.name} 
+                onError={(e: any) => { e.target.src = 'https://via.placeholder.com/150' }}
+              />
               
               <div className="info">
                 <span>Pedido #{order.id}</span>
-                <h3>{order.items.length > 1 
-                  ? `${order.items[0].name} e mais ${order.items.length - 1} itens` 
-                  : order.items[0]?.name}
+                <h3>
+                  {order.items[0]?.name} 
+                  {order.items.length > 1 && ` (+${order.items.length - 1} itens)`}
                 </h3>
-                
                 <div className="status">
-                  {order.status === 'completed' ? (
-                    <><FiCheckCircle color="#10b981"/> <span>Entregue</span></>
+                  {order.status === 'pago' ? (
+                    <FiCheckCircle color="#10b981" />
                   ) : (
-                    <><FiClock color="#f59e0b"/> <span>Em processamento</span></>
+                    <FiClock color="#f59e0b" />
                   )}
-                  <span className="date"> • {new Date(order.createdAt).toLocaleDateString('pt-BR')}</span>
+                  <span>
+                    {order.status.toUpperCase()} • {new Date(order.createdAt).toLocaleDateString('pt-BR')}
+                  </span>
                 </div>
               </div>
 
               <div className="price">
-                {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(order.total)}
+                {new Intl.NumberFormat('pt-BR', { 
+                  style: 'currency', 
+                  currency: 'BRL' 
+                }).format(order.total)}
               </div>
             </S.OrderCard>
           ))
         )}
       </S.OrderList>
+
+      {/* Só mostra a paginação se houver mais de uma página */}
+      {totalPages > 1 && (
+        <S.Pagination>
+          <button 
+            onClick={() => setPage(old => Math.max(old - 1, 1))} 
+            disabled={page === 1 || loading}
+          >
+            <FiChevronLeft /> Anterior
+          </button>
+          
+          <span>{page} / {totalPages}</span>
+          
+          <button 
+            onClick={() => setPage(old => Math.min(old + 1, totalPages))} 
+            disabled={page === totalPages || loading}
+          >
+            Próxima <FiChevronRight />
+          </button>
+        </S.Pagination>
+      )}
     </S.Container>
   );
 }

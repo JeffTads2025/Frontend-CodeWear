@@ -1,7 +1,8 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { FiMail, FiLock, FiLogIn, FiShoppingCart } from 'react-icons/fi';
-import api from '../../services/api';
+import { useNavigate, Link } from 'react-router-dom';
+import { FiMail, FiLock } from 'react-icons/fi';
+import { toast } from 'react-toastify';
+import api from '../../services/api'; 
 import * as S from './styles';
 
 export function Login() {
@@ -12,33 +13,40 @@ export function Login() {
 
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault();
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email.trim())) {
+      toast.error('Formato de e-mail inválido.', { theme: 'dark' });
+      return;
+    }
+
     setLoading(true);
 
     try {
-      // 1. Envia os dados para o seu loginUser no Backend
-      const response = await api.post('/login', { email, password });
+      const response = await api.post('/login', { 
+        email: email.toLowerCase().trim(), 
+        password: password.trim() 
+      });
 
       const { token, user } = response.data;
 
-      // 2. Salva o Token e os Dados do Usuário no navegador
-      // Isso é o que a Sidebar e o Perfil vão ler depois
+      // SALVAMENTO PADRONIZADO
       localStorage.setItem('@CodeWear:token', token);
       localStorage.setItem('@CodeWear:user', JSON.stringify(user));
+      localStorage.setItem('@CodeWear:userName', user.name); // Para o Header
 
-      // 3. Configura o token em todas as futuras chamadas de API automaticamente
-      api.defaults.headers.authorization = `Bearer ${token}`;
+      if (api.defaults.headers.common) {
+        api.defaults.headers.common.authorization = `Bearer ${token}`;
+      }
 
-      alert(`Bem-vindo, ${user.name}!`);
+      toast.success(`Bem-vindo, ${user.name}!`, { theme: 'dark' });
       
-      // 4. Manda o usuário para a Home após o login
       navigate('/');
-      
-      // Força um recarregamento simples para a Sidebar atualizar o role
-      window.location.reload(); 
+      window.location.reload(); // Garante que Header e Sidebar resetem os estados
 
     } catch (err: any) {
-      const message = err.response?.data?.message || 'Erro ao realizar login.';
-      alert(message);
+      const errorMessage = err.response?.data?.message || 'E-mail ou senha incorretos.';
+      toast.error(errorMessage, { theme: 'dark' });
     } finally {
       setLoading(false);
     }
@@ -47,44 +55,18 @@ export function Login() {
   return (
     <S.Container>
       <S.Content>
-        <S.LogoSection>
-          <div className="icon-box"><FiShoppingCart /></div>
-          <h1>CodeWear</h1>
-          <p>Sua loja de roupas tech</p>
-        </S.LogoSection>
-
         <S.FormCard onSubmit={handleLogin}>
           <h2>Login</h2>
-
           <div className="input-group">
             <label><FiMail size={14} /> E-mail</label>
-            <input 
-              type="email" 
-              value={email} 
-              onChange={e => setEmail(e.target.value)} 
-              placeholder="seu@email.com" 
-              required 
-            />
+            <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="Digite seu e-mail" required />
           </div>
-
           <div className="input-group">
             <label><FiLock size={14} /> Senha</label>
-            <input 
-              type="password" 
-              value={password} 
-              onChange={e => setPassword(e.target.value)} 
-              placeholder="********" 
-              required 
-            />
+            <input type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="Digite sua senha" required />
           </div>
-
-          <button type="submit" disabled={loading}>
-            {loading ? 'Entrando...' : <><FiLogIn /> Entrar</>}
-          </button>
-
-          <p className="signup-text">
-            Não tem uma conta? <Link to="/signup">Cadastre-se</Link>
-          </p>
+          <button type="submit" disabled={loading}>{loading ? 'Conectando...' : 'Entrar'}</button>
+          <p className="signup-text">Novo por aqui? <Link to="/signup">Crie sua conta</Link></p>
         </S.FormCard>
       </S.Content>
     </S.Container>

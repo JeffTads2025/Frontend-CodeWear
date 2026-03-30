@@ -1,103 +1,65 @@
+import { useNavigate, useLocation } from 'react-router-dom';
 import { 
-  FiHome, 
-  FiPackage, 
-  FiUser, 
-  FiLogOut, 
-  FiShoppingCart, 
-  FiShield 
+  FiHome, FiShoppingBag, FiUser, FiLogOut, 
+  FiShoppingCart, FiShield, FiUsers, FiActivity 
 } from 'react-icons/fi';
-import { useLocation, Link, useNavigate } from 'react-router-dom';
-import { useCart } from '../../hooks/useCart';
 import * as S from './styles';
 
 export function Sidebar() {
-  const { pathname } = useLocation();
-  const { cart } = useCart();
   const navigate = useNavigate();
+  const location = useLocation();
 
-  // Soma a quantidade de itens para o badge do carrinho
-  const cartCount = cart.reduce((acc, item) => acc + item.quantity, 0);
-
-  // Lógica para ler o usuário real do Backend salvo no localStorage
   const savedUser = localStorage.getItem('@CodeWear:user');
   const user = savedUser ? JSON.parse(savedUser) : null;
 
-  // Função para deslogar
-  function handleLogout() {
+  const handleLogout = () => {
     localStorage.removeItem('@CodeWear:token');
     localStorage.removeItem('@CodeWear:user');
     navigate('/login');
-    window.location.reload(); // Recarrega para limpar estados da aplicação
-  }
+  };
 
   return (
     <S.Container>
-      <S.Logo>
-        <div className="icon-box">
-          <FiShoppingCart />
-        </div>
-        <div>
-          <h1>CodeWear</h1>
-          <p>Store Dashboard</p>
-        </div>
-      </S.Logo>
+      <S.Nav>
+        <span className="group-title">ÁREA DO CLIENTE</span>
+        <S.NavItem onClick={() => navigate('/')} className={location.pathname === '/' ? 'active' : ''}>
+          <FiHome size={20} /> <span>Início</span>
+        </S.NavItem>
+        <S.NavItem onClick={() => navigate('/cart')} className={location.pathname === '/cart' ? 'active' : ''}>
+          <FiShoppingCart size={20} /> <span>Carrinho</span>
+        </S.NavItem>
+        <S.NavItem onClick={() => navigate('/orders')} className={location.pathname === '/orders' ? 'active' : ''}>
+          <FiShoppingBag size={20} /> <span>Meus Pedidos</span>
+        </S.NavItem>
 
-      <S.Menu>
-        <p className="label">Área do Cliente</p>
-        
-        <S.MenuItem as={Link} to="/" active={pathname === '/'}>
-          <FiHome size={20} />
-          Início
-        </S.MenuItem>
+        {user?.role === 'admin' && (
+          <>
+            <span className="group-title" style={{ marginTop: '12px' }}>GERENCIAMENTO</span>
+            <S.NavItem onClick={() => navigate('/admin')} className={location.pathname === '/admin' ? 'active' : ''}>
+              <FiShield size={20} color="#00ff88" /> <span>Painel Geral</span>
+            </S.NavItem>
+            <S.NavItem onClick={() => navigate('/admin/vendas')} className={location.pathname === '/admin/vendas' ? 'active' : ''}>
+              <FiShoppingBag size={20} /> <span>Vendas</span>
+            </S.NavItem>
+            <S.NavItem onClick={() => navigate('/admin/clientes')} className={location.pathname === '/admin/clientes' ? 'active' : ''}>
+              <FiUsers size={20} /> <span>Clientes</span>
+            </S.NavItem>
+            {/* ITEM REINSERIDO AQUI */}
+            <S.NavItem onClick={() => navigate('/admin/auditoria')} className={location.pathname === '/admin/auditoria' ? 'active' : ''}>
+              <FiActivity size={20} /> <span>Auditoria</span>
+            </S.NavItem>
+          </>
+        )}
+      </S.Nav>
 
-        <S.MenuItem as={Link} to="/cart" active={pathname === '/cart'}>
-          <div style={{ display: 'flex', alignItems: 'center', width: '100%', gap: '12px' }}>
-            <FiShoppingCart size={20} />
-            <span>Carrinho</span>
-            {cartCount > 0 && (
-              <span className="badge" style={{
-                background: 'var(--primary)',
-                color: 'white',
-                fontSize: '10px',
-                padding: '2px 6px',
-                borderRadius: '10px',
-                marginLeft: 'auto'
-              }}>{cartCount}</span>
-            )}
-          </div>
-        </S.MenuItem>
-
-        <S.MenuItem as={Link} to="/orders" active={pathname === '/orders'}>
-          <FiPackage size={20} />
-          Meus Pedidos
-        </S.MenuItem>
-      </S.Menu>
-
-      {/* SÓ APARECE SE O ROLE NO BANCO FOR 'admin' */}
-      {user?.role === 'admin' && (
-        <S.Menu>
-          <p className="label">Gerenciamento</p>
-          
-          <S.MenuItem as={Link} to="/admin" active={pathname === '/admin'}>
-            <FiShield size={20} />
-            Painel Admin
-          </S.MenuItem>
-        </S.Menu>
-      )}
-
-      <S.Menu style={{ marginTop: 'auto' }}>
-        <p className="label">Conta</p>
-        <S.MenuItem as={Link} to="/profile" active={pathname === '/profile'}>
-          <FiUser size={20} />
-          Perfil
-        </S.MenuItem>
-        
-        {/* Botão de Sair como um botão real que chama o Logout */}
-        <S.MenuItem as="button" onClick={handleLogout} style={{ width: '100%', cursor: 'pointer', background: 'none', border: 'none', textAlign: 'left' }}>
-          <FiLogOut size={20} />
-          Sair
-        </S.MenuItem>
-      </S.Menu>
+      <S.FooterNav>
+        <S.NavItem onClick={() => navigate('/profile')} className={location.pathname === '/profile' ? 'active' : ''}>
+          <FiUser size={20} /> <span>Meu Perfil</span>
+        </S.NavItem>
+        <S.NavItem onClick={handleLogout} className="logout">
+          <FiLogOut size={20} /> <span>Sair</span>
+        </S.NavItem>
+      </S.FooterNav>
     </S.Container>
   );
 }

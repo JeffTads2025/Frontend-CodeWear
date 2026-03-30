@@ -1,123 +1,109 @@
 import styled from 'styled-components';
 
 export const Container = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 24px;
-`;
-
-export const Header = styled.header`
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  
-  .icon-bg {
-    background-color: var(--primary);
-    width: 42px;
-    height: 42px;
-    border-radius: 10px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: white;
-    font-size: 20px;
-  }
-
-  div {
-    h2 { font-size: 24px; color: white; }
-    p { color: var(--text-secondary); font-size: 13px; }
-  }
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 40px 20px;
 `;
 
 export const ProductGrid = styled.div`
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-  gap: 24px;
-  margin-top: 10px;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 32px;
 `;
 
 export const ProductCard = styled.div`
-  background-color: var(--sidebar);
+  background: var(--sidebar, #111827);
   border-radius: 12px;
-  overflow: hidden;
   border: 1px solid #1e293b;
+  overflow: hidden;
   transition: transform 0.2s;
-  display: flex;
-  flex-direction: column;
 
   &:hover {
     transform: translateY(-5px);
+    border-color: var(--primary, #3b82f6);
   }
 
-  img {
-    width: 100%;
-    height: 180px;
-    object-fit: cover;
-    border-bottom: 1px solid #1e293b;
-    cursor: zoom-in; /* Indica que pode ampliar */
+  .image-container {
+    height: 300px;
+    overflow: hidden;
+    img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
   }
 
   .content {
-    padding: 16px;
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    flex: 1;
-
-    h3 { color: white; font-size: 15px; font-weight: 600; }
-    .description { color: var(--text-secondary); font-size: 12px; line-height: 1.4; }
-    .price { color: var(--primary); font-size: 18px; font-weight: bold; margin-top: 8px; }
+    padding: 1.5rem;
+    h3 { color: white; font-size: 18px; margin-bottom: 8px; }
+    .description { 
+      color: #94a3b8; 
+      font-size: 13px; 
+      margin-bottom: 16px; 
+      height: 40px; 
+      overflow: hidden; 
+    }
+    .size-selector { display: flex; gap: 8px; margin-bottom: 20px; }
+    .footer-card {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-top: 1px solid #1e293b;
+      padding-top: 16px;
+      .price { color: white; font-weight: bold; font-size: 18px; }
+    }
   }
 `;
 
-export const SizeBadge = styled.span<{ active?: boolean }>`
-  background: ${props => props.active ? 'var(--primary)' : '#1e293b'};
-  color: ${props => props.active ? 'white' : '#94a3b8'};
-  padding: 4px 10px;
-  border-radius: 6px;
-  font-size: 11px;
-  font-weight: 600;
+export const SizeBadge = styled.button<{ $active: boolean }>`
+  background: ${props => props.$active ? 'var(--primary, #3b82f6)' : '#1e293b'};
+  color: white;
+  border: 1px solid ${props => props.$active ? 'var(--primary, #3b82f6)' : 'transparent'};
+  padding: 4px 12px;
+  border-radius: 4px;
   cursor: pointer;
+  font-size: 12px;
+  transition: all 0.2s;
+
+  &:hover {
+    border-color: var(--primary, #3b82f6);
+  }
 `;
 
 export const AddButton = styled.button`
-  background-color: var(--primary);
+  background: var(--primary, #3b82f6);
   color: white;
-  padding: 10px;
-  border-radius: 8px;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-weight: 600;
   display: flex;
   align-items: center;
-  justify-content: center;
   gap: 8px;
-  font-weight: 600;
-  font-size: 13px;
-  margin-top: 12px;
-  border: none;
+  cursor: pointer;
+  transition: filter 0.2s;
+
+  &:hover {
+    filter: brightness(0.9);
+  }
 `;
 
-// ESTILO DO ZOOM (MODAL)
-export const ImageModalOverlay = styled.div<{ active?: boolean }>`
+export const ImageModalOverlay = styled.div<{ $active: boolean }>`
+  display: ${props => props.$active ? 'flex' : 'none'};
   position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-  background-color: rgba(0, 0, 0, 0.9);
-  display: flex;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0, 0, 0, 0.9);
+  z-index: 999;
   align-items: center;
   justify-content: center;
-  z-index: 9999;
-  opacity: ${props => props.active ? 1 : 0};
-  visibility: ${props => props.active ? 'visible' : 'hidden'};
-  transition: all 0.3s ease;
-  cursor: zoom-out;
+  padding: 20px;
 
   img {
-    max-width: 85%;
-    max-height: 85%;
-    border-radius: 12px;
-    box-shadow: 0 0 40px rgba(0, 0, 0, 0.5);
-    transform: scale(${props => props.active ? 1 : 0.7});
-    transition: transform 0.3s ease;
+    max-width: 100%;
+    max-height: 90vh;
+    border-radius: 8px;
+    box-shadow: 0 0 20px rgba(0,0,0,0.5);
   }
 `;

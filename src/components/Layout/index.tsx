@@ -1,6 +1,8 @@
 import { type ReactNode } from 'react';
+import { Header } from '../Header';
 import { Sidebar } from '../Sidebar';
-import { Container, Content } from './styles';
+import { Footer } from '../Footer';
+import * as S from './styles';
 
 interface LayoutProps {
   children: ReactNode;
@@ -8,11 +10,13 @@ interface LayoutProps {
 
 export function Layout({ children }: LayoutProps) {
   return (
-    <Container>
+    <S.Container>
+      <Header />
       <Sidebar />
-      <Content>
+      <S.Content>
         {children}
-      </Content>
-    </Container>
+      </S.Content>
+      <Footer />
+    </S.Container>
   );
 }
