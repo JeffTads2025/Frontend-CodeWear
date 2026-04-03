@@ -1,24 +1,25 @@
 import styled from 'styled-components';
 
 export const Container = styled.footer`
-  position: fixed;
-  bottom: 0;
-  left: 0;
+  /* REMOVIDO: position: fixed e bottom: 0 */
+  position: relative; 
   width: 100%;
   height: 90px;
-  background: transparent; 
-  z-index: 1000;
+  background: #0d0d0d; /* Defini a cor aqui para unir tudo */
+  z-index: 10;
   display: flex;
   align-items: center;
-  pointer-events: none; 
+  
+  /* REMOVIDO: pointer-events: none (não faz sentido se ele não é fixo) */
 
   @media (max-width: 768px) {
-    position: relative;
     height: auto;
+    padding: 20px 0;
   }
 `;
 
 export const ContentWrapper = styled.div`
+  /* Mantendo o alinhamento com a Sidebar */
   margin-left: 240px;
   width: calc(100% - 240px);
   height: 100%;
@@ -31,7 +32,6 @@ export const ContentWrapper = styled.div`
   gap: 8px; 
   
   padding: 0 30px;
-  pointer-events: auto;
 
   @media (max-width: 768px) {
     margin-left: 0;
@@ -42,9 +42,14 @@ export const ContentWrapper = styled.div`
 export const Content = styled.div`
   display: flex;
   align-items: center;
-  justify-content: flex-start; /* Alinha tudo à esquerda em sequência */
+  justify-content: flex-start;
   gap: 20px;
   width: 100%;
+
+  @media (max-width: 768px) {
+    flex-direction: column;
+    gap: 15px;
+  }
 `;
 
 export const Contact = styled.div`
@@ -55,6 +60,12 @@ export const Contact = styled.div`
     gap: 20px;
     padding: 0;
     margin: 0;
+    
+    @media (max-width: 480px) {
+      flex-direction: column;
+      gap: 10px;
+    }
+
     li {
       display: flex;
       align-items: center;
@@ -92,13 +103,18 @@ export const Social = styled.div`
   display: flex;
   gap: 15px;
   padding-left: 20px;
-  border-left: 1px solid #222; /* Divisória entre Endereço/Mapa e Redes Sociais */
+  border-left: 1px solid #222;
   
   a { 
     color: #555; 
     transition: 0.2s; 
     display: flex;
     &:hover { color: #00ff88; } 
+  }
+
+  @media (max-width: 768px) {
+    border-left: none;
+    padding-left: 0;
   }
 `;
 
@@ -112,5 +128,6 @@ export const Copyright = styled.div`
     font-size: 0.65rem; 
     margin: 0;
     letter-spacing: 0.5px;
+    text-align: center;
   }
 `;

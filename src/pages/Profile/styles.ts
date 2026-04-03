@@ -3,11 +3,14 @@ import styled from 'styled-components';
 export const Container = styled.div`
   display: flex; 
   flex-direction: column; 
-  align-items: center; /* Centraliza o Header e o Content horizontalmente */
+  align-items: center; 
   gap: 32px; 
+  width: 100%; /* Garante que ocupe a largura toda */
   max-width: 1200px; 
   margin: 0 auto; 
   padding: 40px 20px;
+  background: #000000; /* PRETO ABSOLUTO para sumir com a cor antiga */
+  min-height: 100vh;
 `;
 
 export const Header = styled.header`
@@ -15,23 +18,22 @@ export const Header = styled.header`
   align-items: center; 
   gap: 16px;
   width: 100%;
-  max-width: 800px; /* Alinha a largura com o card centralizado */
+  max-width: 800px;
 
   .icon-bg { 
-    background: #0087ff; 
+    background: #ffcc00; 
     padding: 12px; 
     border-radius: 12px; 
-    color: white; 
+    color: #000; 
     display: flex; 
     font-size: 24px; 
   }
   
-  h2 { color: white; margin: 0; font-size: 28px; } 
-  p { color: #94a3b8; margin: 4px 0 0 0; }
+  h2 { color: white; margin: 0; font-size: 28px; font-weight: 700; } 
+  p { color: #999; margin: 4px 0 0 0; }
 `;
 
 export const Content = styled.div`
-  /* Alterado de GRID para FLEX para facilitar a centralização única */
   display: flex; 
   flex-direction: column;
   align-items: center; 
@@ -40,12 +42,12 @@ export const Content = styled.div`
 `;
 
 export const ProfileCard = styled.div`
-  background: #1e293b; 
-  border: 1px solid #334155; 
+  background: #161616; 
+  border: 1px solid #222; 
   padding: 32px; 
   border-radius: 16px;
   width: 100%;
-  max-width: 800px; /* Define a largura máxima do card centralizado */
+  max-width: 800px;
 
   .card-header {
     display: flex; 
@@ -53,7 +55,7 @@ export const ProfileCard = styled.div`
     align-items: center; 
     margin-bottom: 30px;
 
-    h3 { color: white; margin: 0; }
+    h3 { color: white; margin: 0; font-weight: 700; }
     
     .actions { display: flex; gap: 12px; }
     
@@ -64,26 +66,26 @@ export const ProfileCard = styled.div`
       display: flex; 
       align-items: center; 
       gap: 8px; 
-      font-weight: 600; 
+      font-weight: 700; 
       transition: all 0.2s;
 
       &.edit-btn { 
         background: transparent; 
-        border: 1px solid #0087ff; 
-        color: #0087ff; 
-        &:hover { background: #0087ff; color: white; } 
+        border: 1px solid #ffcc00; 
+        color: #ffcc00; 
+        &:hover { background: #ffcc00; color: #000; } 
       }
       &.save-btn { 
-        background: #0087ff; 
-        border: 1px solid #0087ff; 
-        color: white; 
-        &:hover { filter: brightness(1.2); } 
+        background: #ffcc00; 
+        border: 1px solid #ffcc00; 
+        color: #000; 
+        &:hover { background: #e6b800; transform: scale(1.02); } 
       }
       &.cancel-btn { 
         background: transparent; 
-        border: 1px solid #f75a68; 
-        color: #f75a68; 
-        &:hover { background: #f75a68; color: white; } 
+        border: 1px solid #ef4444; 
+        color: #ef4444; 
+        &:hover { background: #ef4444; color: white; } 
       }
     }
   }
@@ -101,50 +103,50 @@ export const InfoGroup = styled.div`
     flex-direction: column; 
     gap: 8px;
 
-    label { color: #94a3b8; font-size: 13px; display: flex; align-items: center; gap: 6px; }
+    label { color: #666; font-size: 13px; display: flex; align-items: center; gap: 6px; font-weight: bold; }
     
     p { 
       color: white; 
       font-size: 15px; 
       margin: 0; 
-      background: #0f172a; 
+      background: #0d0d0d; 
       padding: 12px; 
       border-radius: 8px; 
-      border: 1px solid transparent;
-      &.disabled-field { color: #64748b; background: rgba(0,0,0,0.1); }
+      border: 1px solid #222;
+      &.disabled-field { color: #555; background: rgba(0,0,0,0.2); }
     }
 
     input, textarea { 
-      background: #0f172a; 
-      border: 1px solid #334155; 
+      background: #0d0d0d; 
+      border: 1px solid #2a2a2a; 
       border-radius: 8px; 
       padding: 12px; 
       color: white; 
       outline: none;
-      &:focus { border-color: #0087ff; }
+      transition: border-color 0.2s;
+      &:focus { border-color: #ffcc00; }
     }
   }
   .full-width { grid-column: 1 / -1; }
 `;
 
-/* Se você decidir manter o SecurityCard, ele agora aparecerá ABAIXO do ProfileCard, também centralizado */
 export const SecurityCard = styled.div`
-  background: #1e293b; 
+  background: #161616; 
   padding: 32px; 
   border-radius: 16px; 
-  border: 1px solid #334155;
+  border: 1px solid #222;
   width: 100%;
   max-width: 800px;
 
-  h3 { color: white; margin-bottom: 12px; font-size: 18px; }
-  p { color: #94a3b8; font-size: 14px; margin-bottom: 24px; line-height: 1.6; }
+  h3 { color: white; margin-bottom: 12px; font-size: 18px; font-weight: 700; }
+  p { color: #999; font-size: 14px; margin-bottom: 24px; line-height: 1.6; }
   
   .account-status { 
-    border-top: 1px solid #334155; 
+    border-top: 1px solid #222; 
     padding-top: 20px; 
     display: flex; 
     justify-content: space-between;
-    span { color: #94a3b8; }
-    span:last-child { color: #0087ff; font-weight: bold; }
+    span { color: #666; font-weight: bold; }
+    span:last-child { color: #ffcc00; font-weight: 800; }
   }
 `;

@@ -20,7 +20,6 @@ export function Home() {
   const [sizeSelected, setSizeSelected] = useState<Record<number, string>>({});
   const [qtySelected, setQtySelected] = useState<Record<number, number>>({});
 
-  // Importamos o 'cart' para saber o que já está lá dentro
   const { addToCart, cart } = useCart();
 
   const loadProducts = useCallback(async () => {
@@ -39,7 +38,6 @@ export function Home() {
     return () => window.removeEventListener('focus', loadProducts);
   }, [loadProducts]);
 
-  // [LOGICA DE APOIO] Soma quanto deste produto (qualquer tamanho) já está no carrinho
   const getQtyInCart = (productId: number) => {
     return cart
       .filter(item => item.id === productId)
@@ -55,7 +53,6 @@ export function Home() {
     const alreadyInCart = getQtyInCart(productId);
 
     if (type === 'plus') {
-      // TRAVA: A soma do que já está no carrinho + o que você quer adicionar não pode passar do estoque
       if (currentQty + alreadyInCart >= stock) {
         toast.warn(`Limite de estoque atingido! Você já tem ${alreadyInCart} un. no carrinho.`, { theme: 'dark' });
         return;
@@ -71,7 +68,6 @@ export function Home() {
     const qtyToAdd = qtySelected[product.id] || 1;
     const alreadyInCart = getQtyInCart(product.id);
 
-    // [TRAVA FINAL NO CLIQUE DO BOTÃO]
     if (alreadyInCart + qtyToAdd > product.stock) {
       toast.error(`Impossível adicionar! Estoque total: ${product.stock}. Você já possui ${alreadyInCart} un. no carrinho.`, { theme: 'dark' });
       return;
@@ -109,15 +105,13 @@ export function Home() {
                   <h3>{product.name}</h3>
                   <p className="description">{product.description}</p>
                   
-                  <p style={{ 
-                    fontSize: '12px', 
-                    color: isOutOfStock ? '#ef4444' : '#10b981', 
-                    fontWeight: 'bold', 
-                    marginBottom: '8px' 
+                  {/* Disponibilidade: Usando a classe CSS '.availability' para melhor organização */}
+                  <p className="availability" style={{ 
+                    color: isOutOfStock ? '#ef4444' : '#ffffff', 
                   }}>
                     {isOutOfStock 
-                      ? (product.stock <= 0 ? 'Produto Esgotado' : 'Limite no Carrinho Atingido') 
-                      : `Disponível: ${product.stock} un (No carrinho: ${alreadyInCart})`}
+                      ? (product.stock <= 0 ? '❌ Esgotado' : '⚠️ No limite') 
+                      : `✅ Disp: ${product.stock} un (No cart: ${alreadyInCart})`}
                   </p>
 
                   <div className="size-selector">
@@ -134,38 +128,47 @@ export function Home() {
                   </div>
 
                   <div className="footer-card">
-                    <div className="qty-controls" style={{ display: 'flex', alignItems: 'center', gap: '8px', background: '#1e293b', padding: '4px', borderRadius: '8px' }}>
+                    <div className="qty-controls" style={{ 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        gap: '8px', 
+                        background: '#0d0d0d', 
+                        padding: '4px 8px', 
+                        borderRadius: '6px',
+                        border: '1px solid #333'
+                      }}>
                       <button 
                         onClick={() => handleQtyChange(product.id, 'minus', product.stock)} 
                         disabled={isOutOfStock || qty <= 1} 
-                        style={{ background: 'none', border: 'none', color: 'white', cursor: 'pointer' }}
+                        style={{ background: 'none', border: 'none', color: '#fff', cursor: 'pointer', outline: 'none' }}
                       >
-                        <FiMinus size={12}/>
+                        <FiMinus size={14}/>
                       </button>
                       
-                      <span style={{ color: 'white', fontWeight: 'bold', minWidth: '15px', textAlign: 'center' }}>
+                      <span style={{ color: '#ffcc00', fontWeight: 'bold', minWidth: '15px', textAlign: 'center', fontSize: '14px' }}>
                         {isOutOfStock && alreadyInCart >= product.stock ? 0 : qty}
                       </span>
                       
                       <button 
                         onClick={() => handleQtyChange(product.id, 'plus', product.stock)} 
                         disabled={isOutOfStock || qty + alreadyInCart >= product.stock} 
-                        style={{ background: 'none', border: 'none', color: 'white', cursor: 'pointer' }}
+                        style={{ background: 'none', border: 'none', color: '#fff', cursor: 'pointer', outline: 'none' }}
                       >
-                        <FiPlus size={12}/>
+                        <FiPlus size={14}/>
                       </button>
                     </div>
 
                     <S.AddButton 
                       onClick={() => handleBuy(product)} 
                       disabled={isOutOfStock}
-                      style={{ opacity: isOutOfStock ? 0.5 : 1 }}
                     >
-                      <FiShoppingCart size={16} /> {isOutOfStock ? 'Limite' : 'Comprar'}
+                      <FiShoppingCart size={18} /> 
+                      {isOutOfStock ? 'Limite' : 'Comprar'}
                     </S.AddButton>
                   </div>
 
-                  <div className="price" style={{ marginTop: '10px', color: '#6366f1', fontWeight: 'bold' }}>
+                  {/* Preço movido para fora do footer-card e alinhado ao rodapé pelo flexbox */}
+                  <div className="price" style={{ marginTop: '15px', color: '#fff', fontWeight: '800', fontSize: '1.3rem', borderTop: '1px solid #222', paddingTop: '12px' }}>
                     {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(product.price)}
                   </div>
                 </div>
