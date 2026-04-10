@@ -7,10 +7,41 @@ import {
 } from 'react-icons/fi';
 import api from '../../services/api';
 import { Pagination } from '../../components/Pagination';
+import type { OrderItemSummary, OrdersListResponse, OrderSummary } from '../../types/api';
 import * as S from './styles';
 
+interface OrderCardItem {
+  name: string;
+  image: string;
+}
+
+interface OrderCardData {
+  id: number;
+  createdAt: string;
+  status: string;
+  total: number;
+  items: OrderCardItem[];
+}
+
+function mapOrderItems(items: OrderItemSummary[] | undefined): OrderCardItem[] {
+  return (items ?? []).map((item) => ({
+    name: item.Product?.name || 'Produto indisponível',
+    image: item.Product?.image_url || 'https://via.placeholder.com/150',
+  }));
+}
+
+function mapOrderCard(order: OrderSummary): OrderCardData {
+  return {
+    id: order.id,
+    createdAt: order.createdAt,
+    status: order.status,
+    total: Number(order.totalValue),
+    items: mapOrderItems(order.OrderItems || order.orderItems),
+  };
+}
+
 export function Orders() {
-  const [orders, setOrders] = useState<any[]>([]);
+  const [orders, setOrders] = useState<OrderCardData[]>([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
@@ -19,7 +50,7 @@ export function Orders() {
     setLoading(true);
     try {
       // Faz a chamada para a API
-      const response = await api.get(`/orders?page=${page}`);
+      const response = await api.get<OrdersListResponse>(`/orders?page=${page}`);
 
       /**
        * LÓGICA DE COMPATIBILIDADE (HÍBRIDA):
@@ -36,17 +67,7 @@ export function Orders() {
       setTotalPages(totalP);
 
       // Formatação dos dados para a interface
-      const formatted = rawOrders.map((o: any) => ({
-        id: o.id,
-        createdAt: o.createdAt,
-        status: o.status,
-        total: Number(o.totalValue),
-        // Proteção para o nome da relação: tenta buscar em OrderItems ou orderItems
-        items: (o.OrderItems || o.orderItems || []).map((i: any) => ({
-          name: i.Product?.name || 'Produto indisponível',
-          image: i.Product?.image_url || 'https://via.placeholder.com/150'
-        }))
-      }));
+      const formatted = rawOrders.map(mapOrderCard);
 
       setOrders(formatted);
     } catch (err) {
@@ -87,7 +108,7 @@ export function Orders() {
               <img
                 src={order.items[0]?.image}
                 alt={order.items[0]?.name}
-                onError={(e: any) => { e.target.src = 'https://via.placeholder.com/150' }}
+                onError={(event) => { event.currentTarget.src = 'https://via.placeholder.com/150'; }}
               />
 
               <div className="info">

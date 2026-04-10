@@ -1,15 +1,43 @@
 import { useState } from 'react';
+import axios from 'axios';
 import { toast } from 'react-toastify';
 import { Button } from '../../components/Button';
 import { useAuth } from '../../hooks/useAuth';
 import { productsApi, usersApi, cartApi, ordersApi, auditApi } from '../../services/api';
 import { maskCPF, sanitizeCPF, validateCPF } from '../../utils/cpf';
+import type {
+    ApiErrorResponse,
+    AuditLogEntry,
+    CartEntry,
+    OrderSummary,
+    Product,
+    ProductsListResponse,
+    ProductUpdateInput,
+    UserProfile,
+    UserUpdateInput,
+} from '../../types/api';
 import * as S from './styles';
+
+function isProductsListResponse(value: Product[] | ProductsListResponse): value is ProductsListResponse {
+    return !Array.isArray(value);
+}
+
+type ApiDemoDataItem = Product | UserProfile | CartEntry | OrderSummary | AuditLogEntry;
+
+type ApiErrorCandidate = Error | { response?: { data?: ApiErrorResponse } } | null | undefined;
+
+function getErrorMessage(error: ApiErrorCandidate, fallback: string): string {
+    if (axios.isAxiosError<ApiErrorResponse>(error)) {
+        return error.response?.data?.message || fallback;
+    }
+
+    return fallback;
+}
 
 export function ApiDemo() {
     const { updateUser } = useAuth();
     const [activeTab, setActiveTab] = useState<'products' | 'users' | 'cart' | 'orders' | 'audit'>('products');
-    const [data, setData] = useState<any[]>([]);
+    const [data, setData] = useState<ApiDemoDataItem[]>([]);
     const [loading, setLoading] = useState(false);
 
     // Estados para inputs dos forms
@@ -60,10 +88,10 @@ export function ApiDemo() {
         setLoading(true);
         try {
             const result = await productsApi.getAll({ limit: 5 });
-            setData(result.products || result);
+            setData(isProductsListResponse(result) ? result.products : result);
             toast.success('✅ Produtos carregados com sucesso!');
-        } catch (error: any) {
-            toast.error(`❌ Erro: ${error.response?.data?.message || 'Erro ao carregar produtos'}`);
+        } catch (error) {
+            toast.error(`❌ Erro: ${getErrorMessage(error as ApiErrorCandidate, 'Erro ao carregar produtos')}`);
         } finally {
             setLoading(false);
         }
@@ -88,8 +116,8 @@ export function ApiDemo() {
             loadProducts();
             // Limpar form
             setProductForm({ name: '', price: '', description: '', stock: '', image_url: '' });
-        } catch (error: any) {
-            toast.error(`❌ Erro: ${error.response?.data?.message || 'Erro ao criar produto'}`);
+        } catch (error) {
+            toast.error(`❌ Erro: ${getErrorMessage(error as ApiErrorCandidate, 'Erro ao criar produto')}`);
         }
     };
 
@@ -100,7 +128,7 @@ export function ApiDemo() {
         }
 
         try {
-            const updateData: any = {};
+            const updateData: ProductUpdateInput = {};
             if (productForm.name) updateData.name = productForm.name;
             if (productForm.price) updateData.price = parseFloat(productForm.price);
             if (productForm.description) updateData.description = productForm.description;
@@ -117,8 +145,8 @@ export function ApiDemo() {
             loadProducts();
             setUpdateProductId('');
             setProductForm({ name: '', price: '', description: '', stock: '', image_url: '' });
-        } catch (error: any) {
-            toast.error(`❌ Erro: ${error.response?.data?.message || 'Erro ao atualizar produto'}`);
+        } catch (error) {
+            toast.error(`❌ Erro: ${getErrorMessage(error as ApiErrorCandidate, 'Erro ao atualizar produto')}`);
         }
     };
 
@@ -134,8 +162,8 @@ export function ApiDemo() {
             toast.success('✅ Produto deletado com sucesso!');
             loadProducts();
             setDeleteProductId('');
-        } catch (error: any) {
-            toast.error(`❌ Erro: ${error.response?.data?.message || 'Erro ao deletar produto'}`);
+        } catch (error) {
+            toast.error(`❌ Erro: ${getErrorMessage(error as ApiErrorCandidate, 'Erro ao deletar produto')}`);
         }
     };
 
@@ -144,10 +172,10 @@ export function ApiDemo() {
         setLoading(true);
         try {
             const result = await usersApi.getAll({ limit: 5 });
-            setData(result.users || result);
+            setData(result.users);
             toast.success('✅ Usuários carregados com sucesso!');
-        } catch (error: any) {
-            toast.error(`❌ Erro: ${error.response?.data?.message || 'Erro ao carregar usuários'}`);
+        } catch (error) {
+            toast.error(`❌ Erro: ${getErrorMessage(error as ApiErrorCandidate, 'Erro ao carregar usuários')}`);
         } finally {
             setLoading(false);
         }
@@ -158,8 +186,8 @@ export function ApiDemo() {
             const result = await usersApi.getProfile();
             setData([result]);
             toast.success('✅ Perfil carregado com sucesso!');
-        } catch (error: any) {
-            toast.error(`❌ Erro: ${error.response?.data?.message || 'Erro ao carregar perfil'}`);
+        } catch (error) {
+            toast.error(`❌ Erro: ${getErrorMessage(error as ApiErrorCandidate, 'Erro ao carregar perfil')}`);
         }
     };
 
@@ -196,8 +224,8 @@ export function ApiDemo() {
             });
             toast.success('✅ Usuário criado com sucesso!');
             setUserForm({ name: '', email: '', password: '', cpf: '', phone: '', address: '' });
-        } catch (error: any) {
-            toast.error(`❌ Erro: ${error.response?.data?.message || 'Erro ao criar usuário'}`);
+        } catch (error) {
+            toast.error(`❌ Erro: ${getErrorMessage(error as ApiErrorCandidate, 'Erro ao criar usuário')}`);
         }
     };
 
@@ -219,7 +247,7 @@ export function ApiDemo() {
         }
 
         try {
-            const updateData: any = {};
+            const updateData: UserUpdateInput = {};
             if (profileForm.name) updateData.name = profileForm.name;
             if (profileForm.phone) updateData.phone = profileForm.phone.replace(/\D/g, '');
             if (profileForm.address) updateData.address = profileForm.address;
@@ -234,8 +262,8 @@ export function ApiDemo() {
             toast.success('✅ Perfil atualizado com sucesso!');
             loadProfile();
             setProfileForm({ name: '', phone: '', address: '', password: '' });
-        } catch (error: any) {
-            toast.error(`❌ Erro: ${error.response?.data?.message || 'Erro ao atualizar perfil'}`);
+        } catch (error) {
+            toast.error(`❌ Erro: ${getErrorMessage(error as ApiErrorCandidate, 'Erro ao atualizar perfil')}`);
         }
     };
 
@@ -246,8 +274,8 @@ export function ApiDemo() {
             const result = await cartApi.getAll();
             setData(result);
             toast.success('✅ Carrinho carregado com sucesso!');
-        } catch (error: any) {
-            toast.error(`❌ Erro: ${error.response?.data?.message || 'Erro ao carregar carrinho'}`);
+        } catch (error) {
+            toast.error(`❌ Erro: ${getErrorMessage(error as ApiErrorCandidate, 'Erro ao carregar carrinho')}`);
         } finally {
             setLoading(false);
         }
@@ -267,8 +295,8 @@ export function ApiDemo() {
             toast.success('✅ Item adicionado ao carrinho!');
             loadCart();
             setCartForm({ productId: '', quantity: '' });
-        } catch (error: any) {
-            toast.error(`❌ Erro: ${error.response?.data?.message || 'Erro ao adicionar item'}`);
+        } catch (error) {
+            toast.error(`❌ Erro: ${getErrorMessage(error as ApiErrorCandidate, 'Erro ao adicionar item')}`);
         }
     };
 
@@ -278,8 +306,8 @@ export function ApiDemo() {
             await cartApi.clear();
             toast.success('✅ Carrinho limpo com sucesso!');
             loadCart();
-        } catch (error: any) {
-            toast.error(`❌ Erro: ${error.response?.data?.message || 'Erro ao limpar carrinho'}`);
+        } catch (error) {
+            toast.error(`❌ Erro: ${getErrorMessage(error as ApiErrorCandidate, 'Erro ao limpar carrinho')}`);
         }
     };
 
@@ -288,10 +316,10 @@ export function ApiDemo() {
         setLoading(true);
         try {
             const result = await ordersApi.getMyOrders();
-            setData(result.orders || result);
+            setData(result.orders);
             toast.success('✅ Pedidos carregados com sucesso!');
-        } catch (error: any) {
-            toast.error(`❌ Erro: ${error.response?.data?.message || 'Erro ao carregar pedidos'}`);
+        } catch (error) {
+            toast.error(`❌ Erro: ${getErrorMessage(error as ApiErrorCandidate, 'Erro ao carregar pedidos')}`);
         } finally {
             setLoading(false);
         }
@@ -301,10 +329,10 @@ export function ApiDemo() {
         setLoading(true);
         try {
             const result = await ordersApi.getAll({ limit: 5 });
-            setData(result.orders || result);
+            setData(result.orders);
             toast.success('✅ Todos os pedidos carregados com sucesso!');
-        } catch (error: any) {
-            toast.error(`❌ Erro: ${error.response?.data?.message || 'Erro ao carregar pedidos'}`);
+        } catch (error) {
+            toast.error(`❌ Erro: ${getErrorMessage(error as ApiErrorCandidate, 'Erro ao carregar pedidos')}`);
         } finally {
             setLoading(false);
         }
@@ -315,10 +343,10 @@ export function ApiDemo() {
         setLoading(true);
         try {
             const result = await auditApi.getLogs({ limit: 5 });
-            setData(result.logs || result);
+            setData(result.logs);
             toast.success('✅ Logs de auditoria carregados com sucesso!');
-        } catch (error: any) {
-            toast.error(`❌ Erro: ${error.response?.data?.message || 'Erro ao carregar logs'}`);
+        } catch (error) {
+            toast.error(`❌ Erro: ${getErrorMessage(error as ApiErrorCandidate, 'Erro ao carregar logs')}`);
         } finally {
             setLoading(false);
         }

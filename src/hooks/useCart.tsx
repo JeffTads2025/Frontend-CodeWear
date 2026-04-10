@@ -1,15 +1,8 @@
 import { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
 import { toast } from 'react-toastify';
-import api from '../services/api';
+import { cartApi } from '../services/api';
 import { useAuth } from './useAuth';
-
-interface Product {
-  id: number;
-  name: string;
-  price: number;
-  image_url: string;
-  stock: number;
-}
+import type { Product } from '../types/api';
 
 interface CartItem extends Product {
   quantity: number;
@@ -47,8 +40,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
         return;
       }
 
-      const response = await api.get('/cart');
-      const formatted = response.data.map((item: any) => ({
+      const cartEntries = await cartApi.getAll();
+      const formatted: CartItem[] = cartEntries.map((item) => ({
         id: item.Product.id,
         cartId: item.id,
         name: item.Product.name,
@@ -86,7 +79,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
     setIsProcessing(true);
     try {
-      await api.post('/cart', { productId: product.id, quantity });
+      await cartApi.addItem({ productId: product.id, quantity });
       await loadCart();
       toast.success(`✅ ${quantity}x ${product.name} adicionado ao carrinho!`, { theme: 'dark' });
     } catch (error) {
@@ -108,10 +101,10 @@ export function CartProvider({ children }: { children: ReactNode }) {
     }
 
     try {
-      const diff = type === 'increase' ? 1 : -1;
       if (type === 'decrease' && item.quantity <= 1) return;
 
-      await api.post('/cart', { productId, quantity: diff });
+      const nextQuantity = type === 'increase' ? item.quantity + 1 : item.quantity - 1;
+      await cartApi.updateItem(item.cartId, { quantity: nextQuantity });
       await loadCart();
     } catch (error) {
       console.error('Erro ao atualizar quantidade do carrinho', error);
@@ -122,7 +115,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
   async function removeFromCart(productId: number) {
     try {
       const itemsToRemove = cart.filter(i => i.id === productId);
-      await Promise.all(itemsToRemove.map(item => api.delete(`/cart/${item.cartId}`)));
+      await Promise.all(itemsToRemove.map(item => cartApi.removeItem(item.cartId)));
       await loadCart();
     } catch (error) {
       console.error('Erro ao remover do carrinho', error);

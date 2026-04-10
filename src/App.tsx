@@ -6,9 +6,9 @@ import { Home } from './pages/Home';
 import { Orders } from './pages/Orders';
 import { Cart } from './pages/Cart';
 import { Admin } from './pages/Admin';
-import { AdminVendas } from './pages/Admin/Vendas'; // Certifique-se de criar o arquivo
-import { AdminClientes } from './pages/Admin/Clientes/index'; // Certifique-se de criar o arquivo
-import { AdminAuditoria } from './pages/Admin/Auditoria/index'; // Certifique-se de criar o arquivo
+import { AdminSales } from './pages/Admin/Sales';
+import { AdminCustomers } from './pages/Admin/Customers';
+import { AdminAudit } from './pages/Admin/Audit';
 import { Profile } from './pages/Profile';
 import { Login } from './pages/Login';
 import { SignUp } from './pages/SignUp/index';
@@ -29,6 +29,8 @@ function App() {
             position="top-right"
             autoClose={8000}
             theme="dark"
+            newestOnTop
+            style={{ zIndex: 20000, top: '84px' }}
           />
 
           <Routes>
@@ -47,9 +49,9 @@ function App() {
 
                   {/* GRUPO DE ROTAS ADMINISTRATIVAS SEPARADAS */}
                   <Route path="/admin" element={<ProtectedRoute isAdminOnly><Admin /></ProtectedRoute>} />
-                  <Route path="/admin/vendas" element={<ProtectedRoute isAdminOnly><AdminVendas /></ProtectedRoute>} />
-                  <Route path="/admin/clientes" element={<ProtectedRoute isAdminOnly><AdminClientes /></ProtectedRoute>} />
-                  <Route path="/admin/auditoria" element={<ProtectedRoute isAdminOnly><AdminAuditoria /></ProtectedRoute>} />
+                  <Route path="/admin/sales" element={<ProtectedRoute isAdminOnly><AdminSales /></ProtectedRoute>} />
+                  <Route path="/admin/customers" element={<ProtectedRoute isAdminOnly><AdminCustomers /></ProtectedRoute>} />
+                  <Route path="/admin/audit" element={<ProtectedRoute isAdminOnly><AdminAudit /></ProtectedRoute>} />
 
                   <Route path="*" element={<Navigate to="/" />} />
                 </Routes>

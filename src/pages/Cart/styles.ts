@@ -144,7 +144,7 @@ export const Summary = styled.aside`
   /* Fixed effect - Desktop only */
   @media (min-width: 1001px) {
     position: fixed;
-    top: 80px;
+    top: 132px;
     right: 40px;
     width: 350px;
     z-index: 100;

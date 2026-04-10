@@ -10,10 +10,12 @@ import {
   FiPhone,
   FiMapPin
 } from 'react-icons/fi';
+import axios from 'axios';
 import { toast } from 'react-toastify';
-import api from '../../services/api';
+import { usersApi } from '../../services/api';
 import { Button } from '../../components/Button';
 import { maskCPF, sanitizeCPF, validateCPF } from '../../utils/cpf';
+import type { ApiErrorResponse } from '../../types/api';
 import * as S from './styles';
 
 export function SignUp() {
@@ -63,7 +65,7 @@ export function SignUp() {
     setLoading(true);
 
     try {
-      await api.post('/users', {
+      await usersApi.create({
         name,
         email: cleanEmail,
         password: cleanPassword,
@@ -75,8 +77,10 @@ export function SignUp() {
       toast.success('Conta criada com sucesso! Faça login para continuar.', { theme: 'dark' });
       navigate('/login');
 
-    } catch (err: any) {
-      const errorMessage = err.response?.data?.message || 'Erro ao criar conta.';
+    } catch (error) {
+      const errorMessage = axios.isAxiosError<ApiErrorResponse>(error)
+        ? error.response?.data?.message || 'Erro ao criar conta.'
+        : 'Erro ao criar conta.';
       toast.error(errorMessage, { theme: 'dark' });
     } finally {
       setLoading(false);

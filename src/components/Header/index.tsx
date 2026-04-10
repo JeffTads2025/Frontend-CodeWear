@@ -20,14 +20,29 @@ export function Header() {
   return (
     <S.Container>
       <S.Content>
-        <S.LogoArea onClick={() => navigate('/')}>
-          <h2>CodeWear</h2>
-        </S.LogoArea>
+        <S.BrandBlock>
+          <S.BrandImage
+            src="/codewear-dev.png"
+            alt="CodeWear"
+            onClick={() => navigate('/')}
+          />
+        </S.BrandBlock>
+
+        <S.SloganArea>
+          <S.Slogan>
+            Eleve seu <S.HighlightWord>{'<style>'}</S.HighlightWord> e de um <S.HighlightWord>{'<Git push>'}</S.HighlightWord> na sua <S.HighlightWord>{'<View>'}</S.HighlightWord>
+            <S.Ellipsis aria-hidden="true">
+              <S.Dot>.</S.Dot>
+              <S.Dot>.</S.Dot>
+              <S.Dot>.</S.Dot>
+            </S.Ellipsis>
+          </S.Slogan>
+        </S.SloganArea>
 
         <S.IconsArea>
-          <button onClick={() => userName ? navigate('/profile') : navigate('/login')}>
+          <button onClick={() => userName ? navigate('/profile') : navigate('/login')} className="user-greeting">
             <FiUser size={22} />
-            <span>{userName ? `Olá, ${userName}` : 'Entrar'}</span>
+            <span>{userName ? `Olá, ${userName} !` : 'Entrar'}</span>
           </button>
 
           <button onClick={() => navigate('/cart')} className="cart">

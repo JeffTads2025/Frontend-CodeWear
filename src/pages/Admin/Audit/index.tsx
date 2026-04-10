@@ -4,16 +4,60 @@ import { InfoCard } from '../../../components/InfoCard';
 import { InputV2 } from '../../../components/InputV2';
 import { auditApi } from '../../../services/api';
 import { Pagination } from '../../../components/Pagination';
+import type { AuditLogEntry } from '../../../types/api';
 import * as S from '../styles';
 
-export function AdminAuditoria() {
-    const [logs, setLogs] = useState<any[]>([]);
+export function AdminAudit() {
+    const [logs, setLogs] = useState<AuditLogEntry[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
     const [totalPages, setTotalPages] = useState(1);
 
-    // Função para traduzir ações para português
+    const normalizeDetails = (action: string, details: string) => {
+        const invalidTokens = ['undefined', 'undifined', 'null'];
+        const cleanedDetails = details
+            .replace(/\s*\(ID:\s*\d+\)/gi, '')
+            .trim();
+
+        const parts = cleanedDetails
+            .split(' - ')
+            .map((part) => part.trim())
+            .filter((part) => part.length > 0);
+
+        const validParts = parts.filter((part, index) => {
+            if (index === 0) {
+                return true;
+            }
+
+            const normalizedPart = part.toLowerCase();
+            return !invalidTokens.some((token) => normalizedPart.includes(token));
+        });
+
+        const firstPart = validParts[0] || '';
+        const productNameMatch = firstPart.match(/^(?:Criou|Atualizou|Deletou) produto\s+"([^"]+)"$/i);
+        const remainingParts = validParts.slice(1);
+
+        if (productNameMatch) {
+            const summary = `"${productNameMatch[1]}"`;
+            return [summary, ...remainingParts].join(' - ');
+        }
+
+        if (action === 'DELETE_PRODUCT' && firstPart) {
+            return firstPart.replace(/^Deletou produto\s+/i, '');
+        }
+
+        if (action === 'CREATE_PRODUCT' && firstPart) {
+            return firstPart.replace(/^Criou produto\s+/i, '');
+        }
+
+        if (action === 'UPDATE_PRODUCT' && firstPart) {
+            return firstPart.replace(/^Atualizou produto\s+/i, '');
+        }
+
+        return validParts.join(' - ') || 'Sem detalhes';
+    };
+
     const translateAction = (action: string) => {
         switch (action) {
             case 'CREATE_PRODUCT':
@@ -30,21 +74,17 @@ export function AdminAuditoria() {
     async function loadLogs(page = 1) {
         try {
             setLoading(true);
-            // Enviamos exatamente o que o Back-end espera
             const response = await auditApi.getLogs({ page, limit: 5, search: searchTerm });
-
-            // Tratamos a resposta para não quebrar o .map
             setLogs(response.logs || []);
             setTotalPages(response.totalPages || 1);
             setCurrentPage(page);
         } catch (err) {
-            console.error("Erro ao carregar auditoria");
+            console.error('Erro ao carregar auditoria');
         } finally {
             setLoading(false);
         }
     }
 
-    // Debounce na busca: espera o usuário parar de digitar para carregar
     useEffect(() => {
         const timer = setTimeout(() => loadLogs(1), 500);
         return () => clearTimeout(timer);
@@ -65,7 +105,7 @@ export function AdminAuditoria() {
                         <InputV2
                             placeholder="Pesquisar..."
                             value={searchTerm}
-                            onChange={e => setSearchTerm(e.target.value)}
+                            onChange={(e) => setSearchTerm(e.target.value)}
                             icon={<FiSearch size={16} />}
                             fullWidth
                         />
@@ -84,12 +124,12 @@ export function AdminAuditoria() {
                         </tr>
                     </thead>
                     <tbody>
-                        {logs.map(log => (
+                        {logs.map((log) => (
                             <tr key={log.id}>
                                 <td><strong>{log.adminName || 'Sistema'}</strong></td>
                                 <td><span style={{ color: 'var(--primary)' }}>{translateAction(log.action)}</span></td>
                                 <td>
-                                    <InfoCard value={log.details || 'Sem detalhes'} />
+                                    <InfoCard value={normalizeDetails(log.action, log.details || 'Sem detalhes')} />
                                 </td>
                                 <td>{new Date(log.createdAt).toLocaleString('pt-BR')}</td>
                             </tr>

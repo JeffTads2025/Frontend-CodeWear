@@ -36,13 +36,13 @@ export function Sidebar() {
             <S.NavItem onClick={() => navigate('/admin')} className={location.pathname === '/admin' ? 'active' : ''}>
               <FiShield size={20} color="#00ff88" /> <span>Painel Geral</span>
             </S.NavItem>
-            <S.NavItem onClick={() => navigate('/admin/vendas')} className={location.pathname === '/admin/vendas' ? 'active' : ''}>
+            <S.NavItem onClick={() => navigate('/admin/sales')} className={location.pathname === '/admin/sales' ? 'active' : ''}>
               <FiShoppingBag size={20} /> <span>Vendas</span>
             </S.NavItem>
-            <S.NavItem onClick={() => navigate('/admin/clientes')} className={location.pathname === '/admin/clientes' ? 'active' : ''}>
+            <S.NavItem onClick={() => navigate('/admin/customers')} className={location.pathname === '/admin/customers' ? 'active' : ''}>
               <FiUsers size={20} /> <span>Clientes</span>
             </S.NavItem>
-            <S.NavItem onClick={() => navigate('/admin/auditoria')} className={location.pathname === '/admin/auditoria' ? 'active' : ''}>
+            <S.NavItem onClick={() => navigate('/admin/audit')} className={location.pathname === '/admin/audit' ? 'active' : ''}>
               <FiActivity size={20} /> <span>Auditoria</span>
             </S.NavItem>
             <S.NavItem onClick={() => navigate('/api-demo')} className={location.pathname === '/api-demo' ? 'active' : ''}>

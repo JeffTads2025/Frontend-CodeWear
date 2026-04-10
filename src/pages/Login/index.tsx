@@ -1,11 +1,13 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FiMail, FiLock } from 'react-icons/fi';
+import axios from 'axios';
 import { toast } from 'react-toastify';
-import api from '../../services/api';
+import api, { authApi } from '../../services/api';
 import * as S from './styles';
 import { Button } from '../../components/Button';
 import { useAuth } from '../../hooks/useAuth';
+import type { ApiErrorResponse } from '../../types/api';
 
 export function Login() {
   const navigate = useNavigate();
@@ -26,12 +28,10 @@ export function Login() {
     setLoading(true);
 
     try {
-      const response = await api.post('/login', {
+      const { token, user } = await authApi.login({
         email: email.toLowerCase().trim(),
         password: password.trim()
       });
-
-      const { token, user } = response.data;
 
       signIn({ token, user });
 
@@ -43,8 +43,10 @@ export function Login() {
 
       navigate('/');
 
-    } catch (err: any) {
-      const errorMessage = err.response?.data?.message || 'E-mail ou senha incorretos.';
+    } catch (error) {
+      const errorMessage = axios.isAxiosError<ApiErrorResponse>(error)
+        ? error.response?.data?.message || 'E-mail ou senha incorretos.'
+        : 'E-mail ou senha incorretos.';
       toast.error(errorMessage, { theme: 'dark' });
     } finally {
       setLoading(false);

@@ -3,17 +3,22 @@ import {
   FiPackage, FiPlus, FiTrash2, FiDollarSign,
   FiUsers, FiShoppingBag, FiActivity, FiLink
 } from 'react-icons/fi';
-import { toast, ToastContainer } from 'react-toastify';
+import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
-import api from '../../services/api';
-import { productsApi } from '../../services/api';
+import axios from 'axios';
+import { adminApi, productsApi } from '../../services/api';
 import { ButtonV2 } from '../../components/ButtonV2';
+import type { ApiErrorResponse, DashboardStats, Product, ProductUpdateInput } from '../../types/api';
 import * as S from './styles';
 
+function isProductsListResponse(value: Product[] | { products: Product[] }): value is { products: Product[] } {
+  return !Array.isArray(value);
+}
+
 export function Admin() {
-  const [stats, setStats] = useState({ totalRevenue: 0, totalOrders: 0, totalUsers: 0 });
-  const [products, setProducts] = useState<any[]>([]);
+  const [stats, setStats] = useState<DashboardStats>({ totalRevenue: 0, totalOrders: 0, totalUsers: 0 });
+  const [products, setProducts] = useState<Product[]>([]);
 
   // States para criação
   const [name, setName] = useState('');
@@ -24,11 +29,11 @@ export function Admin() {
   const loadAdminData = useCallback(async () => {
     try {
       const [statsRes, productsRes] = await Promise.all([
-        api.get('/admin/dashboard'),
+        adminApi.getDashboard(),
         productsApi.getAll()
       ]);
-      setStats(statsRes.data);
-      const pData = productsRes.products || productsRes;
+      setStats(statsRes);
+      const pData = isProductsListResponse(productsRes) ? productsRes.products : productsRes;
       setProducts(Array.isArray(pData) ? pData : []);
     } catch {
       toast.error("Erro ao carregar dados do servidor.");
@@ -40,7 +45,7 @@ export function Admin() {
   }, [loadAdminData]);
 
   // FUNÇÃO DE EDIÇÃO (ENTER)
-  async function handleUpdateProduct(id: number, updatedData: Record<string, string | number | null>) {
+  async function handleUpdateProduct(id: number, updatedData: ProductUpdateInput) {
     try {
       await productsApi.update(id, updatedData);
       toast.success('Alteração salva! ✅', { autoClose: 1000 });
@@ -66,9 +71,10 @@ export function Admin() {
         await productsApi.delete(id);
         toast.success('Produto removido! 🗑️');
         loadAdminData();
-      } catch (err: any) {
-        // Puxa o motivo real do backend (ex: "Produto vinculado a pedidos")
-        const errorMessage = err.response?.data?.error || "Erro ao excluir produto.";
+      } catch (error) {
+        const errorMessage = axios.isAxiosError<ApiErrorResponse>(error)
+          ? error.response?.data?.error || error.response?.data?.message || 'Erro ao excluir produto.'
+          : 'Erro ao excluir produto.';
         toast.error(`Não foi possível excluir: ${errorMessage}`, {
           autoClose: 5000
         });
@@ -207,7 +213,6 @@ export function Admin() {
           </S.ProductList>
         </S.Card>
       </S.Grid>
-      <ToastContainer position="top-center" theme="dark" />
     </S.Container>
   );
 }

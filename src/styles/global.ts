@@ -44,4 +44,12 @@ export const GlobalStyle = createGlobalStyle`
     text-decoration: none;
     color: inherit;
   }
+
+  .Toastify__toast-container {
+    z-index: 20000;
+  }
+
+  .Toastify__toast {
+    border-radius: 12px;
+  }
 `;

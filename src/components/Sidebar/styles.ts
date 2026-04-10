@@ -6,8 +6,8 @@ export const Container = styled.aside`
   border-right: 1px solid #222;
   position: fixed;
   left: 0;
-  top: 70px; 
-  height: calc(100vh - 70px); 
+  top: 104px; 
+  height: calc(100vh - 104px); 
   display: flex;
   flex-direction: column;
   z-index: 900; 

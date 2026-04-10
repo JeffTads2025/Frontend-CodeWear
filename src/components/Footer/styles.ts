@@ -72,6 +72,12 @@ export const Contact = styled.div`
       gap: 8px;
       color: #999;
       font-size: 0.75rem;
+
+      a {
+        color: inherit;
+        text-decoration: none;
+      }
+
       svg { color: #00ff88; min-width: 14px; }
     }
   }

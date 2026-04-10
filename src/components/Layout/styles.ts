@@ -15,10 +15,10 @@ export const Content = styled.main`
   display: flex;
   flex-direction: column;
   min-width: 0;
-  margin-top: 70px;    /* Altura exata do Header */
+  margin-top: 104px;    /* Altura exata do Header */
   margin-left: 240px;  /* Largura exata da Sidebar */
   width: auto;
-  min-height: calc(100vh - 70px);
+  min-height: calc(100vh - 104px);
   background: #0a0a0a;
   overflow-x: hidden;
   padding: 2rem;

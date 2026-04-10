@@ -1,11 +1,13 @@
 import { useState, useEffect } from 'react';
 import { FiUser, FiEdit2, FiSave, FiMapPin, FiPhone, FiHash, FiLock, FiX } from 'react-icons/fi';
+import axios from 'axios';
 import { toast } from 'react-toastify';
 import { useNavigate } from 'react-router-dom';
 import { usersApi } from '../../services/api';
 import { Button } from '../../components/Button';
 import { useAuth } from '../../hooks/useAuth';
 import { maskCPF, sanitizeCPF, validateCPF } from '../../utils/cpf';
+import type { ApiErrorResponse, UserUpdateInput } from '../../types/api';
 import * as S from './styles';
 
 export function Profile() {
@@ -72,7 +74,7 @@ export function Profile() {
         return;
       }
 
-      const updateData: any = {
+      const updateData: UserUpdateInput = {
         name,
         phone: cleanPhone,
         address,
@@ -93,8 +95,11 @@ export function Profile() {
       // Mantém formatado na tela após o sucesso
       setCpf(maskCPF(cleanCPF));
       setPhone(maskPhone(cleanPhone));
-    } catch (err: any) {
-      toast.error(err.response?.data?.message || 'Erro ao salvar alterações.');
+    } catch (error) {
+      const errorMessage = axios.isAxiosError<ApiErrorResponse>(error)
+        ? error.response?.data?.message || 'Erro ao salvar alterações.'
+        : 'Erro ao salvar alterações.';
+      toast.error(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -115,8 +120,11 @@ export function Profile() {
       signOut();
       toast.success('Conta cancelada com sucesso.', { theme: 'dark' });
       navigate('/login');
-    } catch (err: any) {
-      toast.error(err.response?.data?.message || 'Erro ao cancelar conta.', { theme: 'dark' });
+    } catch (error) {
+      const errorMessage = axios.isAxiosError<ApiErrorResponse>(error)
+        ? error.response?.data?.message || 'Erro ao cancelar conta.'
+        : 'Erro ao cancelar conta.';
+      toast.error(errorMessage, { theme: 'dark' });
     } finally {
       setIsCancellingAccount(false);
     }
