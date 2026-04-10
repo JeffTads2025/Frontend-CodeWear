@@ -1,37 +1,32 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
-import { 
-  FiUser, 
-  FiMail, 
-  FiLock, 
-  FiCreditCard, 
-  FiArrowLeft, 
-  FiShoppingCart, 
-  FiPhone, 
-  FiMapPin 
+import { Link, useNavigate } from 'react-router-dom';
+import {
+  FiUser,
+  FiMail,
+  FiLock,
+  FiCreditCard,
+  FiArrowLeft,
+  FiShoppingCart,
+  FiPhone,
+  FiMapPin
 } from 'react-icons/fi';
 import { toast } from 'react-toastify';
 import api from '../../services/api';
+import { Button } from '../../components/Button';
+import { maskCPF, sanitizeCPF, validateCPF } from '../../utils/cpf';
 import * as S from './styles';
 
 export function SignUp() {
-  
+  const navigate = useNavigate();
+
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [cpf, setCpf] = useState('');
   const [phone, setPhone] = useState('');
   const [address, setAddress] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
-
-  function maskCPF(value: string) {
-    return value
-      .replace(/\D/g, '')
-      .replace(/(\d{3})(\d)/, '$1.$2')
-      .replace(/(\d{3})(\d)/, '$1.$2')
-      .replace(/(\d{3})(\d{1,2})/, '$1-$2')
-      .replace(/(-\d{2})\d+?$/, '$1');
-  }
 
   function maskPhone(value: string) {
     return value
@@ -50,44 +45,35 @@ export function SignUp() {
       return;
     }
 
-    const cleanCpf = cpf.replace(/\D/g, '');
+    const cleanCpf = sanitizeCPF(cpf);
     const cleanEmail = email.toLowerCase().trim();
+    const cleanPassword = password.trim();
+    const cleanConfirmPassword = confirmPassword.trim();
+
+    if (!validateCPF(cleanCpf)) {
+      toast.error('CPF inválido.', { theme: 'dark' });
+      return;
+    }
+
+    if (cleanPassword !== cleanConfirmPassword) {
+      toast.error('As senhas não coincidem!', { theme: 'dark' });
+      return;
+    }
 
     setLoading(true);
 
     try {
-      // 1. Cria o usuário no banco
-      await api.post('/users', { 
-        name, 
-        email: cleanEmail, 
-        password, 
+      await api.post('/users', {
+        name,
+        email: cleanEmail,
+        password: cleanPassword,
         cpf: cleanCpf,
-        phone, 
-        address 
+        phone,
+        address
       });
 
-      // 2. EFETUA O LOGIN AUTOMÁTICO IMEDIATAMENTE
-      // Isso evita que o cliente caia na tela de login
-      const loginResponse = await api.post('/login', { 
-        email: cleanEmail, 
-        password 
-      });
-
-      const { token, user } = loginResponse.data;
-
-      // 3. SALVA OS DADOS (Padronizado com seu Login.tsx)
-      localStorage.setItem('@CodeWear:token', token);
-      localStorage.setItem('@CodeWear:user', JSON.stringify(user));
-      localStorage.setItem('@CodeWear:userName', user.name);
-
-      if (api.defaults.headers.common) {
-        api.defaults.headers.common.authorization = `Bearer ${token}`;
-      }
-
-      toast.success(`Conta criada! Bem-vindo(a), ${user.name}!`, { theme: 'dark' });
-
-      // 4. MANDA PARA A HOME E FORÇA O REFRESH DO HEADER
-      window.location.href = '/'; 
+      toast.success('Conta criada com sucesso! Faça login para continuar.', { theme: 'dark' });
+      navigate('/login');
 
     } catch (err: any) {
       const errorMessage = err.response?.data?.message || 'Erro ao criar conta.';
@@ -103,7 +89,7 @@ export function SignUp() {
         <S.LogoSection>
           <div className="icon-box"><FiShoppingCart /></div>
           <h1>CodeWear</h1>
-          <p>Crie sua conta</p>
+          <p>Cadastre-se</p>
         </S.LogoSection>
 
         <S.FormCard onSubmit={handleSubmit}>
@@ -121,7 +107,17 @@ export function SignUp() {
 
           <div className="input-group">
             <label><FiCreditCard size={14} /> CPF</label>
-            <input value={cpf} onChange={e => setCpf(maskCPF(e.target.value))} placeholder="000.000.000-00" required />
+            <input
+              value={cpf}
+              onChange={e => setCpf(maskCPF(e.target.value))}
+              onBlur={() => {
+                if (cpf && !validateCPF(cpf)) {
+                  toast.error('CPF inválido.', { theme: 'dark' });
+                }
+              }}
+              placeholder="000.000.000-00"
+              required
+            />
           </div>
 
           <div className="input-group">
@@ -136,12 +132,17 @@ export function SignUp() {
 
           <div className="input-group full-width">
             <label><FiLock size={14} /> Senha</label>
-            <input type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="Mínimo 6 caracteres" required />
+            <input type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="Mínimo 8 caracteres" required />
           </div>
 
-          <button type="submit" disabled={loading}>
-            {loading ? 'Processando...' : 'Criar Conta'}
-          </button>
+          <div className="input-group full-width">
+            <label><FiLock size={14} /> Confirmar Senha</label>
+            <input type="password" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} placeholder="Repita sua senha" required />
+          </div>
+
+          <Button type="submit" loading={loading}>
+            Criar Conta
+          </Button>
 
           <Link to="/login" className="back-link">
             <FiArrowLeft /> Já tenho conta

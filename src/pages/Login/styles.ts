@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import styled from 'styled-components';
 
 export const Container = styled.div`
@@ -66,45 +67,26 @@ export const FormCard = styled.form`
     }
   }
 
-  button {
-    background: #ffcc00; /* Botão Amarelo */
-    color: #000; /* Texto Preto */
-    border: none; 
-    padding: 14px;
-    border-radius: 8px; 
-    font-weight: 800; 
-    cursor: pointer; 
-    font-size: 16px;
-    display: flex; 
-    align-items: center; 
-    justify-content: center; 
-    gap: 8px;
-    transition: 0.2s;
-    
-    &:hover:not(:disabled) { 
-      background: #e6b800; 
-      transform: scale(1.02);
-    }
-    
-    &:disabled { 
-      background: #333; 
-      color: #666;
-      opacity: 0.5; 
-      cursor: not-allowed;
-    }
-  }
 
-  .signup-text {
-    text-align: center; 
-    color: #999; 
-    font-size: 14px;
-    
-    a { 
-      color: #ffcc00; 
-      text-decoration: none; 
-      font-weight: bold; 
-      
-      &:hover { text-decoration: underline; } 
-    }
+`;
+
+export const SignUpButton = styled(Link)`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 46px;
+  border: 1px solid #ffcc00;
+  border-radius: 8px;
+  background: transparent;
+  color: #ffcc00;
+  font-size: 15px;
+  font-weight: 700;
+  text-decoration: none;
+  transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+
+  &:hover {
+    background: rgba(255, 204, 0, 0.08);
+    color: #ffcc00;
   }
 `;

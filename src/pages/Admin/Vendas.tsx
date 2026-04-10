@@ -1,27 +1,27 @@
-import { useEffect, useState, useMemo } from 'react';
-import { 
-  FiShoppingBag, 
-  FiChevronLeft, 
-  FiChevronRight, 
-  FiDollarSign, 
-  FiCalendar, 
-  FiTrendingUp, 
-  FiDownload 
+import { useEffect, useState } from 'react';
+import {
+  FiCalendar,
+  FiDownload,
+  FiShoppingBag
 } from 'react-icons/fi';
 import api from '../../services/api';
-import * as XLSX from 'xlsx'; 
-import * as S from './styles'; 
+import { ButtonV2 } from '../../components/ButtonV2';
+import { InfoCard } from '../../components/InfoCard';
+import { InputV2 } from '../../components/InputV2';
+import { Pagination } from '../../components/Pagination';
+import * as XLSX from 'xlsx';
+import { toast } from 'react-toastify';
+import * as S from './styles';
 
 export function AdminVendas() {
   const [orders, setOrders] = useState<any[]>([]);
-  const [stats, setStats] = useState({ 
-    totalRevenue: 0, 
-    monthlyRevenue: 0 
+  const [stats, setStats] = useState({
+    totalRevenue: 0,
+    monthlyRevenue: 0
   });
-  const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
-  
+
   // CORREÇÃO: Garante que o estado inicial seja SEMPRE a data de hoje no fuso local
   const [selectedDate, setSelectedDate] = useState(() => {
     const now = new Date();
@@ -30,10 +30,9 @@ export function AdminVendas() {
   });
 
   async function loadVendas() {
-    setLoading(true);
     try {
       // Divide a data (ex: 2024-03-29) para mandar pro Back-end
-      const [year, month, day] = selectedDate.split('-');
+      const [year, month] = selectedDate.split('-');
 
       const [ordersRes, statsRes] = await Promise.all([
         // Busca as vendas do dia específico (Hoje por padrão)
@@ -41,10 +40,10 @@ export function AdminVendas() {
         // Busca os totais do mês e geral
         api.get(`/admin/dashboard?month=${month}&year=${year}`)
       ]);
-      
+
       setOrders(ordersRes.data.orders || []);
       setTotalPages(ordersRes.data.totalPages || 1);
-      
+
       setStats({
         totalRevenue: Number(statsRes.data?.totalRevenue || 0),
         monthlyRevenue: Number(statsRes.data?.monthlyRevenue || 0)
@@ -52,8 +51,6 @@ export function AdminVendas() {
 
     } catch (err) {
       console.error("Erro ao carregar vendas", err);
-    } finally {
-      setLoading(false);
     }
   }
 
@@ -63,10 +60,17 @@ export function AdminVendas() {
   }, [page, selectedDate]);
 
   const formatCurrency = (value: any) => {
-    return new Intl.NumberFormat('pt-BR', { 
-      style: 'currency', 
-      currency: 'BRL' 
+    return new Intl.NumberFormat('pt-BR', {
+      style: 'currency',
+      currency: 'BRL'
     }).format(Number(value) || 0);
+  };
+
+  const formatSelectedDate = (date: string) => {
+    if (!date) return '';
+
+    const [year, month, day] = date.split('-');
+    return `${day}/${month}/${year}`;
   };
 
   const handleExportExcel = async (mode: 'day' | 'month') => {
@@ -81,20 +85,23 @@ export function AdminVendas() {
         exportData = res.data.orders || [];
       }
 
-      if (exportData.length === 0) return alert("Sem vendas para exportar.");
+      if (exportData.length === 0) {
+        toast.warn('Sem vendas para exportar.');
+        return;
+      }
 
-      const rows = exportData.map(o => ({
+      const rows = exportData.map((o: any) => ({
         'Cliente': o.User?.name || 'N/A',
         'Endereço': o.address || 'N/A',
         'Produtos': o.OrderItems?.map((i: any) => `${i.quantity}x ${i.Product?.name}`).join(', '),
         'Data': new Date(o.createdAt).toLocaleDateString('pt-BR'),
-        'Total (R$)': Number(o.totalValue || 0).toLocaleString('pt-BR', { 
-          minimumFractionDigits: 2, 
-          maximumFractionDigits: 2 
+        'Total (R$)': Number(o.totalValue || 0).toLocaleString('pt-BR', {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2
         })
       }));
 
-      const totalSoma = exportData.reduce((acc, curr) => acc + Number(curr.totalValue || 0), 0);
+      const totalSoma = exportData.reduce((acc: number, curr: any) => acc + Number(curr.totalValue || 0), 0);
       rows.push({
         'Cliente': '---', 'Endereço': '---', 'Produtos': '---',
         'Data': 'SOMA TOTAL:',
@@ -112,47 +119,56 @@ export function AdminVendas() {
 
   return (
     <S.Container>
-      <S.Header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-          <FiShoppingBag size={24} color="#ffcc00" />
-          <h2 style={{ margin: 0 }}>Relatório de Vendas e Entregas</h2>
-        </div>
+      <S.TopBar>
+        <S.TitleGroup>
+          <h2>
+            <FiShoppingBag color="#00ff88" /> Relatório de Vendas e Entregas
+            <S.PageBadge>{formatSelectedDate(selectedDate)}</S.PageBadge>
+          </h2>
+        </S.TitleGroup>
 
-        <div style={{ display: 'flex', gap: '10px' }}>
-          <button onClick={() => handleExportExcel('day')} style={{ background: '#161616', color: '#fff', border: '1px solid #333', padding: '10px', borderRadius: '8px', cursor: 'pointer' }}>
-            Exportar Dia
-          </button>
-          <button onClick={() => handleExportExcel('month')} style={{ background: '#161616', color: '#fff', border: '1px solid #333', padding: '10px', borderRadius: '8px', cursor: 'pointer' }}>
-            Exportar Mês
-          </button>
-          {/* O calendário já inicia marcado no dia de hoje */}
-          <input 
-            type="date" 
-            value={selectedDate} 
-            onChange={(e) => setSelectedDate(e.target.value)} 
-            style={{ background: '#161616', border: '1px solid #333', color: '#fff', padding: '8px', borderRadius: '8px', colorScheme: 'dark' }} 
+        <S.ControlsGroup>
+          <ButtonV2
+            label="Exportar Dia"
+            icon={<FiDownload size={16} />}
+            onClick={() => handleExportExcel('day')}
           />
-        </div>
-      </S.Header>
+          <ButtonV2
+            label="Exportar Mês"
+            icon={<FiDownload size={16} />}
+            variant="neutral"
+            onClick={() => handleExportExcel('month')}
+          />
+          <S.ControlField $width="190px">
+            <InputV2
+              type="date"
+              value={selectedDate}
+              onChange={(e) => setSelectedDate(e.target.value)}
+              icon={<FiCalendar size={16} />}
+              fullWidth
+            />
+          </S.ControlField>
+        </S.ControlsGroup>
+      </S.TopBar>
 
-      <div style={{ display: 'flex', gap: '15px', marginBottom: '30px', marginTop: '10px' }}>
-        <div style={{ background: '#161616', padding: '20px', borderRadius: '12px', flex: 1, border: '1px solid #333' }}>
-          <span style={{ color: '#888', fontSize: '0.7rem', fontWeight: 'bold' }}>FATURAMENTO GERAL</span>
-          <h2 style={{ color: '#fff', fontSize: '1.5rem', margin: '5px 0 0 0' }}>{formatCurrency(stats.totalRevenue)}</h2>
-        </div>
+      <S.MetricsRow>
+        <S.MetricCard>
+          <span>FATURAMENTO GERAL</span>
+          <h2>{formatCurrency(stats.totalRevenue)}</h2>
+        </S.MetricCard>
 
-        <div style={{ background: '#161616', padding: '20px', borderRadius: '12px', flex: 1, border: '1px solid #333' }}>
-          <span style={{ color: '#888', fontSize: '0.7rem', fontWeight: 'bold' }}>VENDAS NO MÊS</span>
-          <h2 style={{ color: '#fff', fontSize: '1.5rem', margin: '5px 0 0 0' }}>{formatCurrency(stats.monthlyRevenue)}</h2>
-        </div>
+        <S.MetricCard>
+          <span>VENDAS NO MÊS</span>
+          <h2>{formatCurrency(stats.monthlyRevenue)}</h2>
+        </S.MetricCard>
 
-        <div style={{ background: '#161616', padding: '20px', borderRadius: '12px', flex: 1, border: '1px solid #333' }}>
-          <span style={{ color: '#888', fontSize: '0.7rem', fontWeight: 'bold' }}>FATURAMENTO DO DIA</span>
-          <h2 style={{ color: '#fff', fontSize: '1.5rem', margin: '5px 0 0 0' }}>
+        <S.MetricCard>
+          <span>FATURAMENTO DO DIA</span>
+          <h2>
             {formatCurrency(orders.reduce((acc, o) => acc + Number(o.totalValue), 0))}
           </h2>
-        </div>
-      </div>
+        </S.MetricCard>
+      </S.MetricsRow>
 
       <S.AuditTable>
         <thead>
@@ -168,9 +184,17 @@ export function AdminVendas() {
           {orders.length > 0 ? (
             orders.map(order => (
               <tr key={order.id}>
-                <td><strong>{order.User?.name}</strong></td>
-                <td>{order.address}</td>
-                <td>{order.OrderItems?.map((i: any) => `${i.quantity}x ${i.Product?.name}`).join(', ')}</td>
+                <td>
+                  <InfoCard value={order.User?.name || 'N/A'} />
+                </td>
+                <td>
+                  <InfoCard value={order.address || 'N/A'} />
+                </td>
+                <td>
+                  <InfoCard
+                    value={order.OrderItems?.map((i: any) => `${i.quantity}x ${i.Product?.name}`).join(', ') || 'N/A'}
+                  />
+                </td>
                 <td><strong>{formatCurrency(order.totalValue)}</strong></td>
                 <td>{new Date(order.createdAt).toLocaleDateString('pt-BR')}</td>
               </tr>
@@ -182,11 +206,11 @@ export function AdminVendas() {
       </S.AuditTable>
 
       {totalPages > 1 && (
-        <S.Pagination>
-          <button onClick={() => setPage(page - 1)} disabled={page === 1}>Anterior</button>
-          <span>{page} / {totalPages}</span>
-          <button onClick={() => setPage(page + 1)} disabled={page === totalPages}>Próxima</button>
-        </S.Pagination>
+        <Pagination
+          currentPage={page}
+          totalPages={totalPages}
+          onPageChange={setPage}
+        />
       )}
     </S.Container>
   );

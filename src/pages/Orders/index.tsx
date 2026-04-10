@@ -1,13 +1,12 @@
 import { useEffect, useState } from 'react';
-import { 
-  FiPackage, 
-  FiCheckCircle, 
-  FiClock, 
-  FiShoppingBag, 
-  FiChevronLeft, 
-  FiChevronRight 
+import {
+  FiPackage,
+  FiCheckCircle,
+  FiClock,
+  FiShoppingBag,
 } from 'react-icons/fi';
 import api from '../../services/api';
+import { Pagination } from '../../components/Pagination';
 import * as S from './styles';
 
 export function Orders() {
@@ -21,15 +20,15 @@ export function Orders() {
     try {
       // Faz a chamada para a API
       const response = await api.get(`/orders?page=${page}`);
-      
+
       /**
        * LÓGICA DE COMPATIBILIDADE (HÍBRIDA):
        * Se o back-end enviar um Array direto, usamos 'response.data'.
        * Se o back-end enviar um Objeto { orders: [...] }, usamos 'response.data.orders'.
        */
       const dataFromServer = response.data;
-      const rawOrders = Array.isArray(dataFromServer) 
-        ? dataFromServer 
+      const rawOrders = Array.isArray(dataFromServer)
+        ? dataFromServer
         : (dataFromServer.orders || []);
 
       // Define o total de páginas (se o back não enviar, assume 1)
@@ -59,8 +58,8 @@ export function Orders() {
   }
 
   // Recarrega sempre que a página mudar
-  useEffect(() => { 
-    loadOrders(); 
+  useEffect(() => {
+    loadOrders();
   }, [page]);
 
   return (
@@ -85,16 +84,16 @@ export function Orders() {
           orders.map(order => (
             <S.OrderCard key={order.id}>
               {/* Mostra a imagem do primeiro item do pedido */}
-              <img 
-                src={order.items[0]?.image} 
-                alt={order.items[0]?.name} 
+              <img
+                src={order.items[0]?.image}
+                alt={order.items[0]?.name}
                 onError={(e: any) => { e.target.src = 'https://via.placeholder.com/150' }}
               />
-              
+
               <div className="info">
                 <span>Pedido #{order.id}</span>
                 <h3>
-                  {order.items[0]?.name} 
+                  {order.items[0]?.name}
                   {order.items.length > 1 && ` (+${order.items.length - 1} itens)`}
                 </h3>
                 <div className="status">
@@ -110,9 +109,9 @@ export function Orders() {
               </div>
 
               <div className="price">
-                {new Intl.NumberFormat('pt-BR', { 
-                  style: 'currency', 
-                  currency: 'BRL' 
+                {new Intl.NumberFormat('pt-BR', {
+                  style: 'currency',
+                  currency: 'BRL'
                 }).format(order.total)}
               </div>
             </S.OrderCard>
@@ -122,23 +121,11 @@ export function Orders() {
 
       {/* Só mostra a paginação se houver mais de uma página */}
       {totalPages > 1 && (
-        <S.Pagination>
-          <button 
-            onClick={() => setPage(old => Math.max(old - 1, 1))} 
-            disabled={page === 1 || loading}
-          >
-            <FiChevronLeft /> Anterior
-          </button>
-          
-          <span>{page} / {totalPages}</span>
-          
-          <button 
-            onClick={() => setPage(old => Math.min(old + 1, totalPages))} 
-            disabled={page === totalPages || loading}
-          >
-            Próxima <FiChevronRight />
-          </button>
-        </S.Pagination>
+        <Pagination
+          currentPage={page}
+          totalPages={totalPages}
+          onPageChange={setPage}
+        />
       )}
     </S.Container>
   );

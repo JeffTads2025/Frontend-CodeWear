@@ -1,6 +1,11 @@
 import { createGlobalStyle } from 'styled-components';
 
 export const GlobalStyle = createGlobalStyle`
+  html, body, #root {
+    min-height: 100%;
+    width: 100%;
+  }
+
   :root {
     --background: #0b0e14;       /* Fundo escuro do Figma */
     --sidebar: #111720;          /* Cor da barra lateral */
@@ -22,6 +27,7 @@ export const GlobalStyle = createGlobalStyle`
     background-color: var(--background);
     color: var(--text-main);
     -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
   }
 
   button {

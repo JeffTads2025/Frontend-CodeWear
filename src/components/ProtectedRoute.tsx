@@ -1,27 +1,22 @@
-import type { JSX } from 'react';
+import type { ReactNode } from 'react';
 import { Navigate } from 'react-router-dom';
+import { useAuth } from '../hooks/useAuth';
 
 interface ProtectedRouteProps {
-  children: JSX.Element;
+  children: ReactNode;
   isAdminOnly?: boolean;
 }
 
 export function ProtectedRoute({ children, isAdminOnly = false }: ProtectedRouteProps) {
-  // SIMULAÇÃO: No futuro, isso virá do seu Contexto de Autenticação (AuthContext)
-  // Troque 'customer' por 'admin' para testar o acesso!
-  const user = {
-    isAuthenticated: true,
-    role: 'customer' // Altere manualmente aqui para 'admin' para testar
-  };
+  const { isAuthenticated, user } = useAuth();
 
-  if (!user.isAuthenticated) {
+  if (!isAuthenticated) {
     return <Navigate to="/login" />;
   }
 
-  if (isAdminOnly && user.role !== 'admin') {
-    // Se não for admin, manda para a Home
+  if (isAdminOnly && user?.role !== 'admin') {
     return <Navigate to="/" />;
   }
 
-  return children;
+  return <>{children}</>;
 }

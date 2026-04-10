@@ -1,46 +1,19 @@
-import { useState, useEffect } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { FiShoppingCart, FiUser, FiLogOut } from 'react-icons/fi';
-import api from '../../services/api';
+import { useAuth } from '../../hooks/useAuth';
 import { useCart } from '../../hooks/useCart';
 import * as S from './styles';
 
 export function Header() {
   const navigate = useNavigate();
-  const location = useLocation();
-  const [userName, setUserName] = useState('');
+  const { user, signOut } = useAuth();
   const { cart } = useCart();
 
   const cartSize = cart.reduce((acc, item) => acc + item.quantity, 0);
-
-  // Função que busca o nome atualizado no Storage
-  const syncUserInfo = () => {
-    const userStorage = localStorage.getItem('@CodeWear:user');
-    if (userStorage) {
-      try {
-        const user = JSON.parse(userStorage);
-        // Pega o primeiro nome para exibir
-        setUserName(user.name ? user.name.split(' ')[0] : '');
-      } catch (e) {
-        setUserName('');
-      }
-    } else {
-      setUserName('');
-    }
-  };
-
-  useEffect(() => {
-    syncUserInfo();
-    
-    // Escuta o evento 'storage' disparado pelo Perfil
-    window.addEventListener('storage', syncUserInfo);
-    return () => window.removeEventListener('storage', syncUserInfo);
-  }, [location]);
+  const userName = user?.name ? user.name.split(' ')[0] : '';
 
   function handleLogout() {
-    localStorage.clear();
-    delete api.defaults.headers.common.authorization;
-    setUserName('');
+    signOut();
     navigate('/login');
   }
 

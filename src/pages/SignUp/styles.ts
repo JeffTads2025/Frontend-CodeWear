@@ -7,7 +7,7 @@ export const Container = styled.div`
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #020617; /* Fundo escuro uniforme */
+  background: #0a0a0a;
   padding: 15px; /* Padding externo reduzido para telas menores */
   
   /* Remove scroll da página principal para fixar o formulário */
@@ -35,8 +35,7 @@ export const LogoSection = styled.div`
   text-align: center;
   
   .icon-box {
-    /* Cor e forma do ícone mantidos, mas em tamanho reduzido */
-    background: var(--primary);
+    background: #ffcc00;
     width: 40px; /* Reduzido de 60px */
     height: 40px; /* Reduzido de 60px */
     border-radius: 10px;
@@ -44,7 +43,7 @@ export const LogoSection = styled.div`
     align-items: center;
     justify-content: center;
     margin: 0 auto 8px; /* Margem inferior reduzida */
-    color: white;
+    color: #000;
     font-size: 20px;
   }
 
@@ -56,17 +55,18 @@ export const LogoSection = styled.div`
   }
 
   p {
-    color: #94a3b8;
+    color: #ffcc00;
     font-size: 13px; /* Reduzido de 16px */
+    font-weight: 700;
+    letter-spacing: 0.04em;
     margin-top: 2px;
   }
 `;
 
 export const FormCard = styled.form`
-  /* Fundo, borda e raio mantidos */
-  background: #1e293b;
+  background: #161616;
   border-radius: 16px;
-  border: 1px solid #334155;
+  border: 1px solid #222;
   box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
 
   /* Ativa o Grid System para 2 colunas */
@@ -97,16 +97,17 @@ export const FormCard = styled.form`
     }
 
     label {
-      color: #94a3b8;
+      color: #666;
       font-size: 12px; /* Reduzido de 14px */
       display: flex;
       align-items: center;
       gap: 6px;
+      font-weight: 700;
     }
 
     input {
-      background: #0f172a;
-      border: 1px solid #334155;
+      background: #0d0d0d;
+      border: 1px solid #2a2a2a;
       border-radius: 8px;
       padding: 10px; /* Padding interno do input reduzido */
       color: white;
@@ -115,43 +116,19 @@ export const FormCard = styled.form`
       transition: border-color 0.2s;
 
       &::placeholder {
-        color: #475569;
+        color: #666;
       }
 
       &:focus {
-        border-color: var(--primary);
+        border-color: #ffcc00;
       }
-    }
-  }
-
-  button {
-    /* Botão ocupa a linha inteira */
-    grid-column: 1 / -1;
-    background: var(--primary); /* Azul mantido */
-    color: white;
-    border: none;
-    padding: 12px; /* Reduzido de 14px */
-    border-radius: 8px;
-    font-weight: bold;
-    cursor: pointer;
-    font-size: 15px; /* Reduzido de 16px */
-    margin-top: 10px; /* Margem superior reduzida */
-    transition: filter 0.2s;
-
-    &:hover {
-      filter: brightness(1.2);
-    }
-
-    &:disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
     }
   }
 
   .back-link {
     /* Link ocupa a linha inteira */
     grid-column: 1 / -1;
-    color: #94a3b8;
+    color: #999;
     text-decoration: none;
     font-size: 13px; /* Reduzido de 14px */
     display: flex;
@@ -164,6 +141,12 @@ export const FormCard = styled.form`
     &:hover {
       color: white;
     }
+  }
+
+  > button {
+    grid-column: 1 / -1;
+    width: 100%;
+    margin-top: 4px;
   }
 
   /* Responsividade: Volta para uma coluna em telas de celular */

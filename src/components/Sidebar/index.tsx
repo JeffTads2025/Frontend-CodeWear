@@ -1,20 +1,18 @@
 import { useNavigate, useLocation } from 'react-router-dom';
-import { 
-  FiHome, FiShoppingBag, FiUser, FiLogOut, 
-  FiShoppingCart, FiShield, FiUsers, FiActivity 
+import {
+  FiHome, FiShoppingBag, FiUser, FiLogOut,
+  FiShoppingCart, FiShield, FiUsers, FiActivity
 } from 'react-icons/fi';
+import { useAuth } from '../../hooks/useAuth';
 import * as S from './styles';
 
 export function Sidebar() {
   const navigate = useNavigate();
   const location = useLocation();
-
-  const savedUser = localStorage.getItem('@CodeWear:user');
-  const user = savedUser ? JSON.parse(savedUser) : null;
+  const { user, signOut } = useAuth();
 
   const handleLogout = () => {
-    localStorage.removeItem('@CodeWear:token');
-    localStorage.removeItem('@CodeWear:user');
+    signOut();
     navigate('/login');
   };
 
@@ -44,9 +42,11 @@ export function Sidebar() {
             <S.NavItem onClick={() => navigate('/admin/clientes')} className={location.pathname === '/admin/clientes' ? 'active' : ''}>
               <FiUsers size={20} /> <span>Clientes</span>
             </S.NavItem>
-            {/* ITEM REINSERIDO AQUI */}
             <S.NavItem onClick={() => navigate('/admin/auditoria')} className={location.pathname === '/admin/auditoria' ? 'active' : ''}>
               <FiActivity size={20} /> <span>Auditoria</span>
+            </S.NavItem>
+            <S.NavItem onClick={() => navigate('/api-demo')} className={location.pathname === '/api-demo' ? 'active' : ''}>
+              <FiActivity size={20} /> <span>API Demo</span>
             </S.NavItem>
           </>
         )}

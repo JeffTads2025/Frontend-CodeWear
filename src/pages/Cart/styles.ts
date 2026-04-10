@@ -3,8 +3,18 @@ import styled from 'styled-components';
 export const Container = styled.div`
   display: flex;
   flex-direction: column;
-  gap: 32px;
-  /* RESTAURADO: Formatação original da primeira imagem */
+  background: transparent;
+  min-height: 100%;
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  margin-left: 0;
+  padding: 0;
+
+  @media (max-width: 768px) {
+    margin-left: 0;
+    padding: 0;
+  }
 `;
 
 export const Header = styled.header`
@@ -29,31 +39,32 @@ export const Header = styled.header`
 `;
 
 export const Content = styled.div`
-  display: grid;
-  /* RESTAURADO: Proporção original de 350px para o resumo */
-  grid-template-columns: 1fr 350px; 
-  gap: 32px;
-  @media (max-width: 1000px) { grid-template-columns: 1fr; }
+  display: flex;
+  flex-direction: row;
+  gap: 24px;
+  align-items: flex-start;
+  /* ADICIONADO: padding-top para espaço consistente */
+  padding-top: 32px;
+
+  /* Espaço à direita para o Resumo fixo não cobrir */
+  @media (min-width: 1001px) {
+    padding-right: 420px;
+  }
+
+  @media (max-width: 1000px) { 
+    flex-direction: column;
+    align-items: stretch;
+    padding-right: 0;
+    padding-top: 24px;
+  }
 `;
 
 export const ItemsList = styled.div`
   display: flex;
   flex-direction: column;
   gap: 16px;
-  .empty-cart-btn {
-    /* MUDANÇA DE COR: Fundo Amarelo #ffcc00 */
-    background: #ffcc00; 
-    /* MUDANÇA DE COR: Texto Preto #000 */
-    color: #000; 
-    border: none;
-    /* RESTAURADO: Padding original */
-    padding: 10px 20px; 
-    border-radius: 8px;
-    cursor: pointer;
-    font-weight: bold;
-    transition: 0.2s;
-    &:hover { background: #e6b800; }
-  }
+  flex: 1;
+  width: 100%;
 `;
 
 export const ItemCard = styled.div`
@@ -116,19 +127,6 @@ export const ItemCard = styled.div`
   }
 `;
 
-export const SizeBadge = styled.span<{ $active?: boolean }>`
-  /* MUDANÇA DE COR: Fundo Amarelo #ffcc00 ou Preto #111 */
-  background: ${props => props.$active ? '#ffcc00' : '#111'};
-  /* MUDANÇA DE COR: Texto Preto #000 ou Cinza #999 */
-  color: ${props => props.$active ? '#000' : '#999'};
-  /* MUDANÇA DE COR: Borda Amarela #ffcc00 ou Cinza #2a2a2a */
-  border: 1px solid ${props => props.$active ? '#ffcc00' : '#2a2a2a'};
-  padding: 2px 8px;
-  border-radius: 4px;
-  font-size: 11px;
-  font-weight: bold;
-`;
-
 export const Summary = styled.aside`
   /* MUDANÇA DE COR: Fundo Cinza Escuro #161616 */
   background: #161616; 
@@ -141,6 +139,21 @@ export const Summary = styled.aside`
   flex-direction: column;
   gap: 20px;
   height: fit-content;
+  width: 350px;
+
+  /* Fixed effect - Desktop only */
+  @media (min-width: 1001px) {
+    position: fixed;
+    top: 80px;
+    right: 40px;
+    width: 350px;
+    z-index: 100;
+  }
+
+  /* Mobile responsiveness */
+  @media (max-width: 1000px) {
+    width: 100%;
+  }
 
   h3 { 
     color: white; 
@@ -171,26 +184,6 @@ export const Summary = styled.aside`
       /* RESTAURADO: Tamanho de fonte original */
       strong { color: #ffcc00; font-size: 22px; font-weight: bold; } 
     }
-  }
-
-  .checkout-btn {
-    /* MUDANÇA DE COR: Fundo Amarelo #ffcc00 */
-    background: #ffcc00; 
-    /* MUDANÇA DE COR: Texto Preto #000 */
-    color: #000; 
-    border: none;
-    /* RESTAURADO: Padding original */
-    padding: 15px; 
-    border-radius: 12px;
-    font-weight: bold;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    transition: 0.2s;
-    &:hover:not(:disabled) { background: #e6b800; }
-    &:disabled { background: #333; color: #666; cursor: not-allowed; }
   }
 `;
 

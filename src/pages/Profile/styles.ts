@@ -5,12 +5,12 @@ export const Container = styled.div`
   flex-direction: column; 
   align-items: center; 
   gap: 32px; 
-  width: 100%; /* Garante que ocupe a largura toda */
+  width: 100%;
   max-width: 1200px; 
   margin: 0 auto; 
-  padding: 40px 20px;
-  background: #000000; /* PRETO ABSOLUTO para sumir com a cor antiga */
-  min-height: 100vh;
+  padding: 0;
+  background: transparent;
+  min-height: 100%;
 `;
 
 export const Header = styled.header`
@@ -58,36 +58,6 @@ export const ProfileCard = styled.div`
     h3 { color: white; margin: 0; font-weight: 700; }
     
     .actions { display: flex; gap: 12px; }
-    
-    button { 
-      padding: 8px 20px; 
-      border-radius: 8px; 
-      cursor: pointer; 
-      display: flex; 
-      align-items: center; 
-      gap: 8px; 
-      font-weight: 700; 
-      transition: all 0.2s;
-
-      &.edit-btn { 
-        background: transparent; 
-        border: 1px solid #ffcc00; 
-        color: #ffcc00; 
-        &:hover { background: #ffcc00; color: #000; } 
-      }
-      &.save-btn { 
-        background: #ffcc00; 
-        border: 1px solid #ffcc00; 
-        color: #000; 
-        &:hover { background: #e6b800; transform: scale(1.02); } 
-      }
-      &.cancel-btn { 
-        background: transparent; 
-        border: 1px solid #ef4444; 
-        color: #ef4444; 
-        &:hover { background: #ef4444; color: white; } 
-      }
-    }
   }
 `;
 

@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
 import { toast } from 'react-toastify';
 import api from '../services/api';
+import { useAuth } from './useAuth';
 
 interface Product {
   id: number;
@@ -12,16 +13,14 @@ interface Product {
 
 interface CartItem extends Product {
   quantity: number;
-  size: string;
   cartId: number;
 }
 
 interface CartContextData {
   cart: CartItem[];
-  addToCart: (product: Product, size: string, quantity?: number) => Promise<void>;
-  removeFromCart: (productId: number, size: string) => Promise<void>;
-  updateCartQuantity: (productId: number, size: string, type: 'increase' | 'decrease') => Promise<void>;
-  updateCartSize: (productId: number, oldSize: string, newSize: string) => Promise<void>;
+  addToCart: (product: Product, quantity?: number) => Promise<void>;
+  removeFromCart: (productId: number) => Promise<void>;
+  updateCartQuantity: (productId: number, type: 'increase' | 'decrease') => Promise<void>;
   cartTotal: number;
   clearCart: () => void;
   loadCart: () => Promise<void>;
@@ -30,10 +29,10 @@ interface CartContextData {
 const CartContext = createContext<CartContextData>({} as CartContextData);
 
 export function CartProvider({ children }: { children: ReactNode }) {
+  const { token } = useAuth();
   const [cart, setCart] = useState<CartItem[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
 
-  // [LOGICA CRUCIAL] Soma todas as quantidades de um produto (independente do tamanho) no carrinho
   const getProductTotalInCart = (productId: number) => {
     return cart
       .filter(item => item.id === productId)
@@ -47,6 +46,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
         setCart([]);
         return;
       }
+
       const response = await api.get('/cart');
       const formatted = response.data.map((item: any) => ({
         id: item.Product.id,
@@ -55,105 +55,85 @@ export function CartProvider({ children }: { children: ReactNode }) {
         price: item.Product.price,
         image_url: item.Product.image_url,
         stock: item.Product.stock,
-        quantity: item.quantity,
-        size: item.size
+        quantity: item.quantity
       }));
 
-      const sortedCart = formatted.sort((a: CartItem, b: CartItem) => a.cartId - b.cartId);
-      setCart(sortedCart);
+      setCart(formatted);
     } catch (error) {
-      console.error("Erro ao carregar carrinho");
+      console.error('Erro ao carregar carrinho', error);
     }
   }
 
-  useEffect(() => { loadCart(); }, []);
+  useEffect(() => {
+    if (!token) {
+      setCart([]);
+      return;
+    }
+
+    loadCart();
+  }, [token]);
 
   function clearCart() { setCart([]); }
 
-  async function addToCart(product: Product, size: string, quantity: number = 1) {
+  async function addToCart(product: Product, quantity: number = 1) {
     if (isProcessing) return;
-    
-    // VERIFICAÇÃO GLOBAL: Soma o que já tem no carrinho + o que quer adicionar
+
     const currentTotalInCart = getProductTotalInCart(product.id);
-    
     if (currentTotalInCart + quantity > product.stock) {
-      toast.error(`Limite atingido! Você já tem ${currentTotalInCart} un. no carrinho e o estoque total é ${product.stock}.`, {
-        theme: 'dark'
-      });
+      toast.error(`Limite atingido! Você já tem ${currentTotalInCart} un. no carrinho e o estoque total é ${product.stock}.`, { theme: 'dark' });
       return;
     }
 
     setIsProcessing(true);
     try {
-      await api.post('/cart', { productId: product.id, quantity, size });
+      await api.post('/cart', { productId: product.id, quantity });
       await loadCart();
-      toast.success(`${quantity}x ${product.name} adicionado!`);
-    } catch {
-      toast.error("Erro ao adicionar");
+      toast.success(`✅ ${quantity}x ${product.name} adicionado ao carrinho!`, { theme: 'dark' });
+    } catch (error) {
+      console.error('Erro ao adicionar no carrinho', error);
+      toast.error('Erro ao adicionar');
     } finally {
       setIsProcessing(false);
     }
   }
 
-  async function updateCartQuantity(productId: number, size: string, type: 'increase' | 'decrease') {
-    const item = cart.find(i => i.id === productId && i.size === size);
+  async function updateCartQuantity(productId: number, type: 'increase' | 'decrease') {
+    const item = cart.find(i => i.id === productId);
     if (!item) return;
 
-    if (type === 'increase') {
-      // VERIFICAÇÃO GLOBAL NO AUMENTO:
-      const currentTotalInCart = getProductTotalInCart(productId);
-      if (currentTotalInCart >= item.stock) {
-        toast.warn(`Estoque total do modelo atingido (${item.stock} un)!`);
-        return;
-      }
+    const currentTotalInCart = getProductTotalInCart(productId);
+    if (type === 'increase' && currentTotalInCart >= item.stock) {
+      toast.warn(`Estoque total do produto atingido (${item.stock} un)!`);
+      return;
     }
 
     try {
       const diff = type === 'increase' ? 1 : -1;
       if (type === 'decrease' && item.quantity <= 1) return;
 
-      await api.post('/cart', { productId, quantity: diff, size });
+      await api.post('/cart', { productId, quantity: diff });
       await loadCart();
-    } catch {
-      toast.error("Erro ao atualizar quantidade");
+    } catch (error) {
+      console.error('Erro ao atualizar quantidade do carrinho', error);
+      toast.error('Erro ao atualizar quantidade');
     }
   }
 
-  async function updateCartSize(productId: number, oldSize: string, newSize: string) {
-    // Verifica se já existe o novo tamanho no carrinho para evitar duplicar linhas do mesmo tamanho
-    const alreadyHasSize = cart.find(i => i.id === productId && i.size === newSize);
-    if (alreadyHasSize) {
-      toast.info("Você já tem este tamanho no carrinho. Ajuste a quantidade por lá.");
-      return;
-    }
-
+  async function removeFromCart(productId: number) {
     try {
-      const item = cart.find(i => i.id === productId && i.size === oldSize);
-      if (!item) return;
-      await api.delete(`/cart/${item.cartId}`);
-      await api.post('/cart', { productId, quantity: item.quantity, size: newSize });
+      const itemsToRemove = cart.filter(i => i.id === productId);
+      await Promise.all(itemsToRemove.map(item => api.delete(`/cart/${item.cartId}`)));
       await loadCart();
-    } catch {
-      toast.error("Erro ao mudar tamanho");
-    }
-  }
-
-  async function removeFromCart(productId: number, size: string) {
-    try {
-      const item = cart.find(i => i.id === productId && i.size === size);
-      if (item) {
-        await api.delete(`/cart/${item.cartId}`);
-        await loadCart();
-      }
-    } catch {
-      toast.error("Erro ao remover");
+    } catch (error) {
+      console.error('Erro ao remover do carrinho', error);
+      toast.error('Erro ao remover');
     }
   }
 
   const cartTotal = cart.reduce((acc, item) => acc + (item.price * item.quantity), 0);
 
   return (
-    <CartContext.Provider value={{ cart, addToCart, removeFromCart, updateCartQuantity, updateCartSize, cartTotal, clearCart, loadCart }}>
+    <CartContext.Provider value={{ cart, addToCart, removeFromCart, updateCartQuantity, cartTotal, clearCart, loadCart }}>
       {children}
     </CartContext.Provider>
   );

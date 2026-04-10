@@ -4,15 +4,15 @@ export const Container = styled.div`
   display: flex;
   flex-direction: column;
   gap: 32px;
-  background: #0a0a0a; /* Fundo escuro do tema */
-  min-height: 100vh;
-  
-  /* AFASTAMENTO DA SIDEBAR: 
-     Aumentamos o padding da esquerda para o conteúdo não ficar colado no menu */
-  padding: 40px 20px 40px 80px;
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  background: transparent;
+  min-height: 100%;
+  padding: 0;
 
   @media (max-width: 768px) {
-    padding: 20px; /* Em telas pequenas o padding volta ao normal */
+    padding: 0;
   }
 `;
 
@@ -87,39 +87,4 @@ export const OrderCard = styled.div`
     font-weight: 800;
     font-size: 1.2rem;
   }
-`;
-
-export const Pagination = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  margin-top: 8px;
-  padding-bottom: 40px;
-
-  button {
-    background: #111;
-    border: 1px solid #2a2a2a;
-    color: #fff;
-    padding: 8px 16px;
-    border-radius: 8px;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    cursor: pointer;
-    transition: 0.2s;
-    font-weight: bold;
-
-    &:disabled { 
-      opacity: 0.2; 
-      cursor: not-allowed; 
-    }
-
-    &:not(:disabled):hover { 
-      border-color: #ffcc00;
-      color: #ffcc00;
-      background: #1a1a1a;
-    }
-  }
-
-  span { color: #999; font-size: 14px; font-weight: 500; }
 `;

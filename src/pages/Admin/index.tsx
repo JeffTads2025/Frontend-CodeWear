@@ -7,6 +7,8 @@ import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
 import api from '../../services/api';
+import { productsApi } from '../../services/api';
+import { ButtonV2 } from '../../components/ButtonV2';
 import * as S from './styles';
 
 export function Admin() {
@@ -23,12 +25,12 @@ export function Admin() {
     try {
       const [statsRes, productsRes] = await Promise.all([
         api.get('/admin/dashboard'),
-        api.get('/products')
+        productsApi.getAll()
       ]);
       setStats(statsRes.data);
-      const pData = productsRes.data.products || productsRes.data;
+      const pData = productsRes.products || productsRes;
       setProducts(Array.isArray(pData) ? pData : []);
-    } catch (err) {
+    } catch {
       toast.error("Erro ao carregar dados do servidor.");
     }
   }, []);
@@ -40,10 +42,10 @@ export function Admin() {
   // FUNÇÃO DE EDIÇÃO (ENTER)
   async function handleUpdateProduct(id: number, updatedData: Record<string, string | number | null>) {
     try {
-      await api.put(`/products/${id}`, updatedData);
+      await productsApi.update(id, updatedData);
       toast.success('Alteração salva! ✅', { autoClose: 1000 });
       loadAdminData();
-    } catch (err) {
+    } catch {
       toast.error('Erro ao atualizar dados do produto.');
     }
   }
@@ -61,7 +63,7 @@ export function Admin() {
   async function handleDeleteProduct(id: number) {
     if (window.confirm('Deseja realmente excluir este produto?')) {
       try {
-        await api.delete(`/products/${id}`);
+        await productsApi.delete(id);
         toast.success('Produto removido! 🗑️');
         loadAdminData();
       } catch (err: any) {
@@ -77,28 +79,31 @@ export function Admin() {
   async function handleAddProduct(e: React.FormEvent) {
     e.preventDefault();
     try {
-      await api.post('/products', {
+      await productsApi.create({
         name,
         price: Number(price),
         stock: Number(stock),
         image_url: image,
-        sizes: "P,M,G",
-        category: "Geral"
+        description: "Produto adicionado via painel admin"
       });
       setName(''); setPrice(''); setStock(''); setImage('');
       loadAdminData();
       toast.success('Produto cadastrado com sucesso!');
-    } catch (err) {
+    } catch {
       toast.error('Erro ao cadastrar produto.');
     }
   }
 
   return (
     <S.Container>
-      <S.Header>
-        <FiActivity size={24} color="#ffcc00" />
-        <h2>Painel de Gestão</h2>
-      </S.Header>
+      <S.TopBar>
+        <S.TitleGroup>
+          <h2>
+            <FiActivity color="#00ff88" /> Painel de Gestão
+            <S.PageBadge>visão geral</S.PageBadge>
+          </h2>
+        </S.TitleGroup>
+      </S.TopBar>
 
       <S.StatsGrid>
         <S.StatCard>
@@ -140,7 +145,9 @@ export function Admin() {
               <input value={image} onChange={e => setImage(e.target.value)} required />
             </div>
 
-            <button type="submit" style={{ marginTop: '10px' }}>Cadastrar no Estoque</button>
+            <div>
+              <ButtonV2 type="submit" label="Cadastrar no Estoque" variant="highlight" />
+            </div>
           </S.Form>
         </S.Card>
 

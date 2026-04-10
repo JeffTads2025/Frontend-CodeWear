@@ -2,21 +2,100 @@
 import styled from 'styled-components';
 
 export const Container = styled.div`
-  padding: 40px;
-  background: #0a0a0a;
-  min-height: 100vh;
+  width: 100%;
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0;
+  background: transparent;
+  min-height: 100%;
   color: #fff;
 `;
 
-export const Header = styled.header`
+export const TopBar = styled.header`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 20px;
+  margin-bottom: 20px;
+
+  @media (max-width: 900px) {
+    flex-direction: column;
+    align-items: stretch;
+  }
+`;
+
+export const TitleGroup = styled.div`
   display: flex;
   align-items: center;
-  gap: 15px;
-  margin-bottom: 40px;
+  gap: 10px;
 
   h2 {
-    font-size: 1.8rem;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 0;
+    font-family: inherit;
+    font-size: 1.5em;
+    font-weight: 700;
+    color: inherit;
+  }
+`;
+
+export const ControlsGroup = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  flex-wrap: wrap;
+
+  @media (max-width: 900px) {
+    justify-content: stretch;
+  }
+`;
+
+export const ControlField = styled.div<{ $width?: string }>`
+  width: ${({ $width }) => $width || 'auto'};
+
+  @media (max-width: 900px) {
+    width: 100%;
+  }
+`;
+
+export const PageBadge = styled.span`
+  font-size: 0.8rem;
+  background: #00ff8822;
+  color: #00ff88;
+  padding: 4px 12px;
+  border-radius: 20px;
+  border: 1px solid #00ff8844;
+`;
+
+export const MetricsRow = styled.div`
+  display: flex;
+  gap: 15px;
+  margin: 10px 0 30px;
+  flex-wrap: wrap;
+`;
+
+export const MetricCard = styled.div`
+  background: #161616;
+  padding: 20px;
+  border-radius: 12px;
+  flex: 1;
+  min-width: 220px;
+  border: 1px solid #333;
+
+  span {
+    color: #888;
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+  }
+
+  h2 {
     color: #fff;
+    font-size: 1.5rem;
+    margin: 5px 0 0;
   }
 `;
 
@@ -101,23 +180,6 @@ export const Form = styled.form`
       border-color: #ffcc00;
     }
   }
-
-  button {
-    background: #ffcc00;
-    color: #000;
-    padding: 16px;
-    border-radius: 8px;
-    font-weight: bold;
-    font-size: 1.1rem;
-    border: none;
-    cursor: pointer;
-    transition: 0.2s;
-    margin-top: 10px;
-
-    &:hover {
-      background: #e6b800;
-    }
-  }
 `;
 
 export const ProductList = styled.div`
@@ -157,22 +219,3 @@ export const Table = styled.table`
 `;
 
 export const AuditTable = Table;
-
-export const Pagination = styled.div`
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 15px;
-  margin-top: 30px;
-
-  button {
-    background: #1a1a1a;
-    border: 1px solid #333;
-    color: #fff;
-    padding: 8px 15px;
-    border-radius: 5px;
-    cursor: pointer;
-    &:disabled { opacity: 0.3; }
-    &:hover:not(:disabled) { background: #ffcc00; color: #000; }
-  }
-`;

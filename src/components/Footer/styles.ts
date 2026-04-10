@@ -19,9 +19,10 @@ export const Container = styled.footer`
 `;
 
 export const ContentWrapper = styled.div`
-  /* Mantendo o alinhamento com a Sidebar */
+  flex: 1;
+  min-width: 0;
   margin-left: 240px;
-  width: calc(100% - 240px);
+  width: auto;
   height: 100%;
   background-color: #0d0d0d;
   border-top: 1px solid #1a1a1a;
@@ -42,12 +43,11 @@ export const ContentWrapper = styled.div`
 export const Content = styled.div`
   display: flex;
   align-items: center;
-  justify-content: flex-start;
   gap: 20px;
   width: 100%;
-
+  margin-left: 0;
+  width: 100%;
   @media (max-width: 768px) {
-    flex-direction: column;
     gap: 15px;
   }
 `;

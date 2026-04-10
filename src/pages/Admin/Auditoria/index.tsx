@@ -1,6 +1,9 @@
 import { useEffect, useState } from 'react';
-import { FiActivity, FiSearch, FiChevronLeft, FiChevronRight } from 'react-icons/fi';
-import api from '../../../services/api';
+import { FiActivity, FiSearch } from 'react-icons/fi';
+import { InfoCard } from '../../../components/InfoCard';
+import { InputV2 } from '../../../components/InputV2';
+import { auditApi } from '../../../services/api';
+import { Pagination } from '../../../components/Pagination';
 import * as S from '../styles';
 
 export function AdminAuditoria() {
@@ -10,15 +13,29 @@ export function AdminAuditoria() {
     const [currentPage, setCurrentPage] = useState(1);
     const [totalPages, setTotalPages] = useState(1);
 
+    // Função para traduzir ações para português
+    const translateAction = (action: string) => {
+        switch (action) {
+            case 'CREATE_PRODUCT':
+                return 'Criou produto';
+            case 'UPDATE_PRODUCT':
+                return 'Atualizou produto';
+            case 'DELETE_PRODUCT':
+                return 'Deletou produto';
+            default:
+                return action;
+        }
+    };
+
     async function loadLogs(page = 1) {
         try {
             setLoading(true);
             // Enviamos exatamente o que o Back-end espera
-            const response = await api.get(`/admin/logs?page=${page}&limit=5&search=${searchTerm}`);
-            
+            const response = await auditApi.getLogs({ page, limit: 5, search: searchTerm });
+
             // Tratamos a resposta para não quebrar o .map
-            setLogs(response.data.logs || []);
-            setTotalPages(response.data.totalPages || 1);
+            setLogs(response.logs || []);
+            setTotalPages(response.totalPages || 1);
             setCurrentPage(page);
         } catch (err) {
             console.error("Erro ao carregar auditoria");
@@ -35,18 +52,26 @@ export function AdminAuditoria() {
 
     return (
         <S.Container>
-            <header style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px' }}>
-                <h2><FiActivity /> Auditoria do Sistema</h2>
-                <div style={{ position: 'relative' }}>
-                    <input
-                        placeholder="Pesquisar..."
-                        value={searchTerm}
-                        onChange={e => setSearchTerm(e.target.value)}
-                        style={{ padding: '8px 12px 8px 35px', borderRadius: '4px', border: '1px solid #333', background: '#111', color: '#fff' }}
-                    />
-                    <FiSearch style={{ position: 'absolute', left: '10px', top: '12px', color: '#666' }} />
-                </div>
-            </header>
+            <S.TopBar>
+                <S.TitleGroup>
+                    <h2>
+                        <FiActivity color="#00ff88" /> Auditoria do Sistema
+                        <S.PageBadge>atividade recente</S.PageBadge>
+                    </h2>
+                </S.TitleGroup>
+
+                <S.ControlsGroup>
+                    <S.ControlField $width="280px">
+                        <InputV2
+                            placeholder="Pesquisar..."
+                            value={searchTerm}
+                            onChange={e => setSearchTerm(e.target.value)}
+                            icon={<FiSearch size={16} />}
+                            fullWidth
+                        />
+                    </S.ControlField>
+                </S.ControlsGroup>
+            </S.TopBar>
 
             {loading ? <p>Carregando...</p> : (
                 <S.AuditTable>
@@ -62,8 +87,10 @@ export function AdminAuditoria() {
                         {logs.map(log => (
                             <tr key={log.id}>
                                 <td><strong>{log.adminName || 'Sistema'}</strong></td>
-                                <td><span style={{ color: 'var(--primary)' }}>{log.action}</span></td>
-                                <td style={{ fontSize: '0.85rem', color: '#999' }}>{log.details}</td>
+                                <td><span style={{ color: 'var(--primary)' }}>{translateAction(log.action)}</span></td>
+                                <td>
+                                    <InfoCard value={log.details || 'Sem detalhes'} />
+                                </td>
                                 <td>{new Date(log.createdAt).toLocaleString('pt-BR')}</td>
                             </tr>
                         ))}
@@ -71,15 +98,14 @@ export function AdminAuditoria() {
                 </S.AuditTable>
             )}
 
-            <S.Pagination style={{ marginTop: '20px', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '15px' }}>
-                <button onClick={() => loadLogs(currentPage - 1)} disabled={currentPage === 1 || loading}>
-                    <FiChevronLeft />
-                </button>
-                <span>{currentPage} / {totalPages}</span>
-                <button onClick={() => loadLogs(currentPage + 1)} disabled={currentPage === totalPages || loading}>
-                    <FiChevronRight />
-                </button>
-            </S.Pagination>
+            <Pagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={(page) => {
+                    setCurrentPage(page);
+                    loadLogs(page);
+                }}
+            />
         </S.Container>
     );
 }

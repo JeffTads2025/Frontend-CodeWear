@@ -4,33 +4,28 @@ export const Container = styled.div`
   display: flex;
   flex-direction: column;
   min-height: 100vh;
-  /* Cor base escura para todo o layout */
-  background: #050505; 
-  /* Remove qualquer overflow que possa causar espaços em branco */
-  overflow-x: hidden; 
+  width: 100%;
+  gap: 0;
+  background: #0a0a0a;
+  overflow: visible;
 `;
 
 export const Content = styled.main`
   flex: 1;
   display: flex;
   flex-direction: column;
-  
-  /* Ajuste das distâncias para colar nos componentes vizinhos */
+  min-width: 0;
   margin-top: 70px;    /* Altura exata do Header */
   margin-left: 240px;  /* Largura exata da Sidebar */
-  
-  /* Reset de fundo para garantir que ele herde o preto do Container */
-  background: #050505; 
-  
-  /* Preenchimento interno do conteúdo */
-  // padding: 20px;
-  
-  /* Cálculo para ocupar o restante da tela sem sobrar espaço */
-  width: calc(100% - 240px);
+  width: auto;
   min-height: calc(100vh - 70px);
+  background: #0a0a0a;
+  overflow-x: hidden;
+  padding: 2rem;
 
   @media (max-width: 768px) {
     margin-left: 0;
     width: 100%;
+    padding: 1.25rem;
   }
 `;
