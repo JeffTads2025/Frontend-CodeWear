@@ -130,23 +130,23 @@ export function Admin() {
         <S.Card>
           <h3><FiPlus /> Novo Produto</h3>
           <S.Form onSubmit={handleAddProduct}>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            <div className="field-group">
               <label style={{ color: '#ccc', fontSize: '0.9rem' }}>Nome do Produto</label>
               <input value={name} onChange={e => setName(e.target.value)} required />
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            <div className="two-column-grid">
+              <div className="field-group">
                 <label style={{ color: '#ccc', fontSize: '0.9rem' }}>Preço (R$)</label>
                 <input type="number" step="0.01" value={price} onChange={e => setPrice(e.target.value)} required />
               </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              <div className="field-group">
                 <label style={{ color: '#ccc', fontSize: '0.9rem' }}>Qtd em Estoque</label>
                 <input type="number" value={stock} onChange={e => setStock(e.target.value)} required />
               </div>
             </div>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            <div className="field-group">
               <label style={{ color: '#ccc', fontSize: '0.9rem' }}>URL da Imagem</label>
               <input value={image} onChange={e => setImage(e.target.value)} required />
             </div>
@@ -161,10 +161,10 @@ export function Admin() {
           <h3><FiPackage /> Itens em Estoque</h3>
           <S.ProductList>
             {products.map(product => (
-              <div key={product.id} style={{ display: 'flex', alignItems: 'center', gap: '15px', padding: '15px', background: '#141414', borderRadius: '10px', marginBottom: '12px', border: '1px solid #222' }}>
+              <div key={product.id} className="product-item">
                 <img src={product.image_url} alt="" style={{ width: '60px', height: '60px', borderRadius: '8px', objectFit: 'cover' }} />
 
-                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                <div className="product-content">
                   <input
                     style={{ background: 'transparent', border: 'none', color: '#fff', fontSize: '0.9rem', fontWeight: 'bold', borderBottom: '1px solid #333', outline: 'none' }}
                     defaultValue={product.name}
@@ -172,7 +172,7 @@ export function Admin() {
                   />
 
                   {/* EDIÇÃO DE IMAGEM VIA LINK */}
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                  <div className="image-link-row">
                     <FiLink size={12} color="#666" />
                     <input
                       style={{ background: '#000', border: '1px solid #222', color: '#888', fontSize: '0.7rem', width: '100%', padding: '3px 8px', borderRadius: '4px', outline: 'none' }}
@@ -182,7 +182,7 @@ export function Admin() {
                   </div>
 
                   {/* EDIÇÃO DE PREÇO E QTD VIA ENTER */}
-                  <div style={{ display: 'flex', gap: '10px' }}>
+                  <div className="metric-input-row">
                     <div style={{ display: 'flex', alignItems: 'center', background: '#000', padding: '2px 8px', borderRadius: '4px', border: '1px solid #333' }}>
                       <span style={{ fontSize: '0.7rem', color: '#ffcc00', marginRight: '4px' }}>R$</span>
                       <input
@@ -205,7 +205,7 @@ export function Admin() {
                   </div>
                 </div>
 
-                <button onClick={() => handleDeleteProduct(product.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '10px' }}>
+                <button onClick={() => handleDeleteProduct(product.id)} className="delete-button">
                   <FiTrash2 size={18} color="#ff4444" />
                 </button>
               </div>

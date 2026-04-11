@@ -1,4 +1,4 @@
-import { type ReactNode } from 'react';
+import { useCallback, useState, type ReactNode } from 'react';
 import { Header } from '../Header';
 import { Sidebar } from '../Sidebar';
 import { Footer } from '../Footer';
@@ -9,10 +9,14 @@ interface LayoutProps {
 }
 
 export function Layout({ children }: LayoutProps) {
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const closeSidebar = useCallback(() => setIsSidebarOpen(false), []);
+  const toggleSidebar = useCallback(() => setIsSidebarOpen((current) => !current), []);
+
   return (
     <S.Container>
-      <Header />
-      <Sidebar />
+      <Header onMenuToggle={toggleSidebar} />
+      <Sidebar isOpen={isSidebarOpen} onClose={closeSidebar} />
       <S.Content>
         {children}
       </S.Content>

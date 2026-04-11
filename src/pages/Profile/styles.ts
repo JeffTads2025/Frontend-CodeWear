@@ -20,6 +20,10 @@ export const Header = styled.header`
   width: 100%;
   max-width: 800px;
 
+  @media (max-width: 600px) {
+    align-items: flex-start;
+  }
+
   .icon-bg { 
     background: #ffcc00; 
     padding: 12px; 
@@ -49,15 +53,32 @@ export const ProfileCard = styled.div`
   width: 100%;
   max-width: 800px;
 
+  @media (max-width: 600px) {
+    padding: 20px;
+  }
+
   .card-header {
     display: flex; 
     justify-content: space-between; 
     align-items: center; 
     margin-bottom: 30px;
 
+    @media (max-width: 600px) {
+      flex-direction: column;
+      align-items: stretch;
+      gap: 14px;
+    }
+
     h3 { color: white; margin: 0; font-weight: 700; }
     
-    .actions { display: flex; gap: 12px; }
+    .actions {
+      display: flex;
+      gap: 12px;
+
+      @media (max-width: 600px) {
+        flex-direction: column;
+      }
+    }
   }
 `;
 
@@ -92,31 +113,11 @@ export const InfoGroup = styled.div`
       border-radius: 8px; 
       padding: 12px; 
       color: white; 
+      width: 100%;
       outline: none;
       transition: border-color 0.2s;
       &:focus { border-color: #ffcc00; }
     }
   }
   .full-width { grid-column: 1 / -1; }
-`;
-
-export const SecurityCard = styled.div`
-  background: #161616; 
-  padding: 32px; 
-  border-radius: 16px; 
-  border: 1px solid #222;
-  width: 100%;
-  max-width: 800px;
-
-  h3 { color: white; margin-bottom: 12px; font-size: 18px; font-weight: 700; }
-  p { color: #999; font-size: 14px; margin-bottom: 24px; line-height: 1.6; }
-  
-  .account-status { 
-    border-top: 1px solid #222; 
-    padding-top: 20px; 
-    display: flex; 
-    justify-content: space-between;
-    span { color: #666; font-weight: bold; }
-    span:last-child { color: #ffcc00; font-weight: 800; }
-  }
 `;

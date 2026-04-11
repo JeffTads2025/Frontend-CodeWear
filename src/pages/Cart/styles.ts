@@ -85,6 +85,12 @@ export const ItemCard = styled.div`
     border-color: #ffcc00;
   }
 
+  @media (max-width: 768px) {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 16px;
+  }
+
   /* RESTAURADO: Tamanho original da imagem (80x80) */
   img { width: 80px; height: 80px; border-radius: 12px; object-fit: cover; background: #0d0d0d; }
   
@@ -114,6 +120,17 @@ export const ItemCard = styled.div`
   }
   
   .qty-value { color: white; font-weight: bold; }
+
+  .actions {
+    @media (max-width: 768px) {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+  }
   
   .remove-btn { 
     background: none; 
@@ -153,6 +170,7 @@ export const Summary = styled.aside`
   /* Mobile responsiveness */
   @media (max-width: 1000px) {
     width: 100%;
+    position: static;
   }
 
   h3 { 

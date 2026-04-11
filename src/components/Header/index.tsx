@@ -1,10 +1,14 @@
 import { useNavigate } from 'react-router-dom';
-import { FiShoppingCart, FiUser, FiLogOut } from 'react-icons/fi';
+import { FiShoppingCart, FiUser, FiLogOut, FiMenu } from 'react-icons/fi';
 import { useAuth } from '../../hooks/useAuth';
 import { useCart } from '../../hooks/useCart';
 import * as S from './styles';
 
-export function Header() {
+interface HeaderProps {
+  onMenuToggle: () => void;
+}
+
+export function Header({ onMenuToggle }: HeaderProps) {
   const navigate = useNavigate();
   const { user, signOut } = useAuth();
   const { cart } = useCart();
@@ -20,6 +24,10 @@ export function Header() {
   return (
     <S.Container>
       <S.Content>
+        <S.MobileMenuButton type="button" onClick={onMenuToggle} aria-label="Abrir menu">
+          <FiMenu size={22} />
+        </S.MobileMenuButton>
+
         <S.BrandBlock>
           <S.BrandImage
             src="/codewear-dev.png"
@@ -43,6 +51,7 @@ export function Header() {
           <button onClick={() => userName ? navigate('/profile') : navigate('/login')} className="user-greeting">
             <FiUser size={22} />
             <span>{userName ? `Olá, ${userName} !` : 'Entrar'}</span>
+            <small>{userName ? 'Perfil' : 'Login'}</small>
           </button>
 
           <button onClick={() => navigate('/cart')} className="cart">

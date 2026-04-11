@@ -59,6 +59,12 @@ export const OrderCard = styled.div`
     transform: translateY(-2px);
   }
 
+  @media (max-width: 768px) {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 16px;
+  }
+
   img { 
     width: 80px; 
     height: 80px; 
@@ -86,5 +92,11 @@ export const OrderCard = styled.div`
     color: #fff; /* Preço branco conforme o rodapé do card de produto */
     font-weight: 800;
     font-size: 1.2rem;
+  }
+
+  @media (max-width: 768px) {
+    .price {
+      font-size: 1rem;
+    }
   }
 `;

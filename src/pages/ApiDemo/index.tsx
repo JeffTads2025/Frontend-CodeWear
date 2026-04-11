@@ -362,16 +362,9 @@ export function ApiDemo() {
         if (!data.length) return <div>Nenhum dado encontrado. Clique em uma ação para carregar dados.</div>;
 
         return (
-            <div style={{ marginTop: '20px' }}>
+            <div className="json-output">
                 <h3>Dados Carregados ({data.length} itens):</h3>
-                <pre style={{
-                    background: '#1a1a1a',
-                    padding: '15px',
-                    borderRadius: '8px',
-                    fontSize: '12px',
-                    overflow: 'auto',
-                    maxHeight: '400px'
-                }}>
+                <pre>
                     {JSON.stringify(data, null, 2)}
                 </pre>
             </div>
@@ -390,7 +383,7 @@ export function ApiDemo() {
 
             <S.Content>
                 {/* Tabs */}
-                <div style={{ display: 'flex', gap: '10px', marginBottom: '20px', flexWrap: 'wrap' }}>
+                <div className="tab-list">
                     {[
                         { key: 'products', label: '📦 Produtos', color: '#ffcc00' },
                         { key: 'users', label: '👥 Usuários', color: '#3b82f6' },
@@ -417,13 +410,13 @@ export function ApiDemo() {
                 </div>
 
                 {/* Actions */}
-                <div style={{ marginBottom: '20px' }}>
+                <div className="actions-panel">
                     {activeTab === 'products' && (
                         <div>
                             {/* Form para Criar Produto */}
-                            <div style={{ marginBottom: '20px', padding: '15px', background: '#1a1a1a', borderRadius: '8px' }}>
+                            <div className="action-card">
                                 <h4 style={{ color: '#10b981', marginBottom: '10px' }}>➕ Criar Novo Produto</h4>
-                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '10px', marginBottom: '10px' }}>
+                                <div className="fields-grid">
                                     <input
                                         type="text"
                                         placeholder="Nome do produto"
@@ -446,7 +439,7 @@ export function ApiDemo() {
                                         style={{ padding: '8px', borderRadius: '4px', border: '1px solid #333', background: '#0a0a0a', color: '#fff' }}
                                     />
                                 </div>
-                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '10px' }}>
+                                <div className="fields-grid two-columns">
                                     <input
                                         type="text"
                                         placeholder="Descrição"
@@ -466,9 +459,9 @@ export function ApiDemo() {
                             </div>
 
                             {/* Form para Atualizar Produto */}
-                            <div style={{ marginBottom: '20px', padding: '15px', background: '#1a1a1a', borderRadius: '8px' }}>
+                            <div className="action-card">
                                 <h4 style={{ color: '#f59e0b', marginBottom: '10px' }}>✏️ Atualizar Produto</h4>
-                                <div style={{ display: 'flex', gap: '10px', alignItems: 'center', marginBottom: '10px' }}>
+                                <div className="inline-fields">
                                     <input
                                         type="number"
                                         placeholder="ID do produto"
@@ -478,7 +471,7 @@ export function ApiDemo() {
                                     />
                                     <span style={{ color: '#888' }}>← Digite o ID primeiro</span>
                                 </div>
-                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '10px', marginBottom: '10px' }}>
+                                <div className="fields-grid">
                                     <input
                                         type="text"
                                         placeholder="Novo nome (opcional)"
@@ -501,7 +494,7 @@ export function ApiDemo() {
                                         style={{ padding: '8px', borderRadius: '4px', border: '1px solid #333', background: '#0a0a0a', color: '#fff' }}
                                     />
                                 </div>
-                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '10px' }}>
+                                <div className="fields-grid two-columns">
                                     <input
                                         type="text"
                                         placeholder="Nova descrição (opcional)"
@@ -521,9 +514,9 @@ export function ApiDemo() {
                             </div>
 
                             {/* Form para Deletar Produto */}
-                            <div style={{ marginBottom: '20px', padding: '15px', background: '#1a1a1a', borderRadius: '8px' }}>
+                            <div className="action-card">
                                 <h4 style={{ color: '#ef4444', marginBottom: '10px' }}>🗑️ Deletar Produto</h4>
-                                <div style={{ display: 'flex', gap: '10px', alignItems: 'center', marginBottom: '10px' }}>
+                                <div className="inline-fields">
                                     <input
                                         type="number"
                                         placeholder="ID do produto"
@@ -535,7 +528,7 @@ export function ApiDemo() {
                                 <Button onClick={deleteProduct} style={{ background: '#ef4444' }}>🗑️ Deletar Produto</Button>
                             </div>
 
-                            <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+                            <div className="button-row">
                                 <Button onClick={loadProducts}>📖 Listar Produtos</Button>
                             </div>
                         </div>
@@ -544,9 +537,9 @@ export function ApiDemo() {
                     {activeTab === 'users' && (
                         <div>
                             {/* Form para Cadastrar Usuário */}
-                            <div style={{ marginBottom: '20px', padding: '15px', background: '#1a1a1a', borderRadius: '8px' }}>
+                            <div className="action-card">
                                 <h4 style={{ color: '#10b981', marginBottom: '10px' }}>➕ Cadastrar Novo Usuário</h4>
-                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '10px', marginBottom: '10px' }}>
+                                <div className="fields-grid">
                                     <input
                                         type="text"
                                         placeholder="Nome completo"
@@ -576,7 +569,7 @@ export function ApiDemo() {
                                         style={{ padding: '8px', borderRadius: '4px', border: '1px solid #333', background: '#0a0a0a', color: '#fff' }}
                                     />
                                 </div>
-                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '10px' }}>
+                                <div className="fields-grid two-columns">
                                     <input
                                         type="text"
                                         placeholder="Telefone ((00) 00000-0000)"
@@ -596,9 +589,9 @@ export function ApiDemo() {
                             </div>
 
                             {/* Form para Atualizar Perfil */}
-                            <div style={{ marginBottom: '20px', padding: '15px', background: '#1a1a1a', borderRadius: '8px' }}>
+                            <div className="action-card">
                                 <h4 style={{ color: '#f59e0b', marginBottom: '10px' }}>✏️ Atualizar Meu Perfil</h4>
-                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '10px', marginBottom: '10px' }}>
+                                <div className="fields-grid">
                                     <input
                                         type="text"
                                         placeholder="Novo nome (opcional)"
@@ -633,7 +626,7 @@ export function ApiDemo() {
                                 <Button onClick={updateProfile} style={{ background: '#f59e0b' }}>✏️ Atualizar Perfil</Button>
                             </div>
 
-                            <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+                            <div className="button-row">
                                 <Button onClick={loadUsers}>📖 Listar Usuários</Button>
                                 <Button onClick={loadProfile} style={{ background: '#3b82f6' }}>👤 Meu Perfil</Button>
                             </div>
@@ -643,9 +636,9 @@ export function ApiDemo() {
                     {activeTab === 'cart' && (
                         <div>
                             {/* Form para Adicionar ao Carrinho */}
-                            <div style={{ marginBottom: '20px', padding: '15px', background: '#1a1a1a', borderRadius: '8px' }}>
+                            <div className="action-card">
                                 <h4 style={{ color: '#10b981', marginBottom: '10px' }}>➕ Adicionar Item ao Carrinho</h4>
-                                <div style={{ display: 'flex', gap: '10px', alignItems: 'center', marginBottom: '10px' }}>
+                                <div className="inline-fields">
                                     <input
                                         type="number"
                                         placeholder="ID do produto"
@@ -664,7 +657,7 @@ export function ApiDemo() {
                                 <Button onClick={addToCart} style={{ background: '#10b981' }}>➕ Adicionar Item</Button>
                             </div>
 
-                            <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+                            <div className="button-row">
                                 <Button onClick={loadCart}>📖 Ver Carrinho</Button>
                                 <Button onClick={clearCart} style={{ background: '#ef4444' }}>🗑️ Limpar Carrinho</Button>
                             </div>
@@ -672,14 +665,14 @@ export function ApiDemo() {
                     )}
 
                     {activeTab === 'orders' && (
-                        <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+                        <div className="button-row">
                             <Button onClick={loadMyOrders}>📖 Meus Pedidos</Button>
                             <Button onClick={loadAllOrders} style={{ background: '#f59e0b' }}>📊 Todos os Pedidos</Button>
                         </div>
                     )}
 
                     {activeTab === 'audit' && (
-                        <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+                        <div className="button-row">
                             <Button onClick={loadAuditLogs}>📊 Ver Logs</Button>
                         </div>
                     )}

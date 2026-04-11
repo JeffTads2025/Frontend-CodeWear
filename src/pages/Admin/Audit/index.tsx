@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { FiActivity, FiSearch } from 'react-icons/fi';
 import { InfoCard } from '../../../components/InfoCard';
 import { InputV2 } from '../../../components/InputV2';
@@ -71,24 +71,24 @@ export function AdminAudit() {
         }
     };
 
-    async function loadLogs(page = 1) {
+    const loadLogs = useCallback(async (page = 1) => {
         try {
             setLoading(true);
             const response = await auditApi.getLogs({ page, limit: 5, search: searchTerm });
             setLogs(response.logs || []);
             setTotalPages(response.totalPages || 1);
             setCurrentPage(page);
-        } catch (err) {
+        } catch {
             console.error('Erro ao carregar auditoria');
         } finally {
             setLoading(false);
         }
-    }
+    }, [searchTerm]);
 
     useEffect(() => {
         const timer = setTimeout(() => loadLogs(1), 500);
         return () => clearTimeout(timer);
-    }, [searchTerm]);
+    }, [loadLogs]);
 
     return (
         <S.Container>
@@ -113,30 +113,65 @@ export function AdminAudit() {
                 </S.ControlsGroup>
             </S.TopBar>
 
-            {loading ? <p>Carregando...</p> : (
-                <S.AuditTable>
-                    <thead>
-                        <tr>
-                            <th>Usuário</th>
-                            <th>Ação</th>
-                            <th>Detalhes</th>
-                            <th>Data</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {logs.map((log) => (
-                            <tr key={log.id}>
-                                <td><strong>{log.adminName || 'Sistema'}</strong></td>
-                                <td><span style={{ color: 'var(--primary)' }}>{translateAction(log.action)}</span></td>
-                                <td>
-                                    <InfoCard value={normalizeDetails(log.action, log.details || 'Sem detalhes')} />
-                                </td>
-                                <td>{new Date(log.createdAt).toLocaleString('pt-BR')}</td>
-                            </tr>
-                        ))}
-                    </tbody>
-                </S.AuditTable>
-            )}
+            {loading ? <p>Carregando...</p> : null}
+
+            {!loading ? (
+                <>
+                    <S.DesktopTableWrapper>
+                        <S.AuditTable>
+                            <thead>
+                                <tr>
+                                    <th>Usuário</th>
+                                    <th>Ação</th>
+                                    <th>Detalhes</th>
+                                    <th>Data</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {logs.map((log) => (
+                                    <tr key={log.id}>
+                                        <td><strong>{log.adminName || 'Sistema'}</strong></td>
+                                        <td><span style={{ color: 'var(--primary)' }}>{translateAction(log.action)}</span></td>
+                                        <td>
+                                            <InfoCard value={normalizeDetails(log.action, log.details || 'Sem detalhes')} />
+                                        </td>
+                                        <td>{new Date(log.createdAt).toLocaleString('pt-BR')}</td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </S.AuditTable>
+                    </S.DesktopTableWrapper>
+
+                    <S.MobileCards>
+                        {logs.length > 0 ? (
+                            logs.map((log) => (
+                                <S.MobileCard key={log.id}>
+                                    <S.MobileCardHeader>
+                                        <div>
+                                            <strong>{log.adminName || 'Sistema'}</strong>
+                                            <span>{new Date(log.createdAt).toLocaleString('pt-BR')}</span>
+                                        </div>
+                                        <S.MobileBadge>{translateAction(log.action)}</S.MobileBadge>
+                                    </S.MobileCardHeader>
+
+                                    <S.MobileFieldList>
+                                        <S.MobileField>
+                                            <small>Ação</small>
+                                            <span>{translateAction(log.action)}</span>
+                                        </S.MobileField>
+                                        <S.MobileField>
+                                            <small>Detalhes</small>
+                                            <span>{normalizeDetails(log.action, log.details || 'Sem detalhes')}</span>
+                                        </S.MobileField>
+                                    </S.MobileFieldList>
+                                </S.MobileCard>
+                            ))
+                        ) : (
+                            <S.EmptyStateCard>Nenhum registro de auditoria encontrado.</S.EmptyStateCard>
+                        )}
+                    </S.MobileCards>
+                </>
+            ) : null}
 
             <Pagination
                 currentPage={currentPage}

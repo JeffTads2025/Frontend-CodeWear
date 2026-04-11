@@ -10,6 +10,11 @@ export const ProductCard = styled.div`
   flex-direction: column;
   height: 460px;
 
+  @media (max-width: 768px) {
+    height: auto;
+    min-height: 100%;
+  }
+
   &:hover {
     transform: translateY(-5px);
     border-color: #ffcc00;
@@ -21,6 +26,10 @@ export const ProductCard = styled.div`
     overflow: hidden;
     background: #0d0d0d;
     position: relative;
+
+    @media (max-width: 768px) {
+      height: 180px;
+    }
 
     img {
       width: 100%;
@@ -49,6 +58,10 @@ export const ProductCard = styled.div`
       overflow: hidden;
       text-overflow: ellipsis;
       font-weight: 700;
+
+      @media (max-width: 480px) {
+        white-space: normal;
+      }
     }
 
     .description {
@@ -84,6 +97,12 @@ export const ProductCard = styled.div`
       padding-top: 12px;
       margin-top: auto;
 
+      @media (max-width: 480px) {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 10px;
+      }
+
       .price {
         color: #fff;
         font-weight: 800;
@@ -105,6 +124,11 @@ export const AddButton = styled.button`
   gap: 6px;
   font-weight: bold;
   transition: all 0.3s;
+
+  @media (max-width: 480px) {
+    width: 100%;
+    justify-content: center;
+  }
 
   &:hover:not(:disabled) {
     background: #e6b800;

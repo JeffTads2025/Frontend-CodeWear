@@ -113,7 +113,7 @@ export const Cart = () => {
                       <button onClick={() => updateCartQuantity(item.id, 'increase')} className="qty-btn" disabled={isAtLimit}><FiPlus /></button>
                     </div>
                   </div>
-                  <div style={{ textAlign: 'right' }}>
+                  <div className="actions" style={{ textAlign: 'right' }}>
                     <span className="price">{formatMoney(item.price * item.quantity)}</span>
                     <button onClick={() => removeFromCart(item.id)} className="remove-btn" style={{ display: 'block', marginTop: '10px', marginLeft: 'auto' }}><FiTrash2 size={18} /></button>
                   </div>

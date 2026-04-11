@@ -21,7 +21,7 @@ export interface ProductCreateInput {
     stock: number;
 }
 
-export interface ProductUpdateInput extends Partial<ProductCreateInput> { }
+export type ProductUpdateInput = Partial<ProductCreateInput>;
 
 export interface ProductsListResponse {
     products: Product[];
@@ -50,7 +50,7 @@ export interface UserCreateInput {
     address: string;
 }
 
-export interface UserUpdateInput extends Partial<Pick<UserCreateInput, 'name' | 'phone' | 'address' | 'cpf' | 'password'>> { }
+export type UserUpdateInput = Partial<Pick<UserCreateInput, 'name' | 'phone' | 'address' | 'cpf' | 'password'>>;
 
 export interface UsersListResponse {
     users: UserProfile[];

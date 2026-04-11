@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import {
   FiPackage,
   FiCheckCircle,
@@ -46,7 +46,7 @@ export function Orders() {
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
 
-  async function loadOrders() {
+  const loadOrders = useCallback(async () => {
     setLoading(true);
     try {
       // Faz a chamada para a API
@@ -76,12 +76,12 @@ export function Orders() {
     } finally {
       setLoading(false);
     }
-  }
+  }, [page]);
 
   // Recarrega sempre que a página mudar
   useEffect(() => {
     loadOrders();
-  }, [page]);
+  }, [loadOrders]);
 
   return (
     <S.Container>

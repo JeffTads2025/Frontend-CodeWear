@@ -13,6 +13,11 @@ export const Container = styled.header`
   align-items: center;
   padding: 0 2rem 0 0;
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+
+  @media (max-width: 768px) {
+    height: 84px;
+    padding: 0 1rem;
+  }
 `;
 
 export const Content = styled.div`
@@ -22,6 +27,23 @@ export const Content = styled.div`
   display: flex;
   align-items: center;
   justify-content: flex-end;
+`;
+
+export const MobileMenuButton = styled.button`
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  border: 1px solid #222;
+  background: #141414;
+  color: #f5f5f5;
+  margin-right: 0.75rem;
+
+  @media (max-width: 768px) {
+    display: inline-flex;
+  }
 `;
 
 export const BrandBlock = styled.button`
@@ -40,6 +62,13 @@ export const BrandBlock = styled.button`
   background: transparent;
   cursor: pointer;
   isolation: isolate;
+
+  @media (max-width: 768px) {
+    position: static;
+    width: auto;
+    height: auto;
+    margin-right: auto;
+  }
 `;
 
 export const SloganArea = styled.div`
@@ -147,6 +176,10 @@ export const IconsArea = styled.div`
   gap: 1.5rem;
   margin-left: auto;
 
+  @media (max-width: 768px) {
+    gap: 0.5rem;
+  }
+
   button {
     background: none;
     border: none;
@@ -164,6 +197,10 @@ export const IconsArea = styled.div`
     span {
       margin-left: 8px;
       font-size: 0.9rem;
+    }
+
+    small {
+      display: none;
     }
 
     &.cart .badge {
@@ -197,6 +234,21 @@ export const IconsArea = styled.div`
       &:hover {
         color: #00ff88;
       }
+
+      @media (max-width: 768px) {
+        padding: 6px 8px;
+
+        span {
+          display: none;
+        }
+
+        small {
+          display: block;
+          margin-left: 6px;
+          font-size: 0.75rem;
+          color: #c9ced6;
+        }
+      }
     }
   }
 
@@ -221,4 +273,10 @@ export const BrandImage = styled.img`
   border: 1px solid rgba(0, 255, 136, 0.16);
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.02) 0%, rgba(0, 255, 136, 0.03) 100%);
   box-shadow: 0 10px 24px rgba(0, 0, 0, 0.28), 0 0 18px rgba(0, 255, 136, 0.08);
+
+  @media (max-width: 768px) {
+    width: 132px;
+    height: 56px;
+    padding: 4px 6px;
+  }
 `;

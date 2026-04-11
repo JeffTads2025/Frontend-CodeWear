@@ -15,8 +15,12 @@ export const ProductGrid = styled.div`
   gap: 20px;
 
   @media (max-width: 768px) {
-    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
     gap: 12px;
+  }
+
+  @media (max-width: 420px) {
+    grid-template-columns: 1fr;
   }
 `;
 

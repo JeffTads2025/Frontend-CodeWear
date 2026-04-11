@@ -1,6 +1,19 @@
 import styled from 'styled-components';
 
-export const Container = styled.aside`
+export const Overlay = styled.button<{ $open: boolean }>`
+  display: none;
+
+  @media (max-width: 768px) {
+    display: ${({ $open }) => ($open ? 'block' : 'none')};
+    position: fixed;
+    inset: 0;
+    z-index: 899;
+    border: 0;
+    background: rgba(0, 0, 0, 0.6);
+  }
+`;
+
+export const Container = styled.aside<{ $open: boolean }>`
   width: 240px; 
   background-color: #0d0d0d;
   border-right: 1px solid #222;
@@ -14,6 +27,15 @@ export const Container = styled.aside`
   overflow: hidden;
   padding: 0.8rem 0; /* Padding reduzido para dar mais espaço vertical */
 
+  @media (max-width: 768px) {
+    top: 84px;
+    height: calc(100vh - 84px);
+    width: min(82vw, 320px);
+    transform: translateX(${({ $open }) => ($open ? '0' : '-105%')});
+    transition: transform 0.25s ease;
+    box-shadow: 14px 0 28px rgba(0, 0, 0, 0.35);
+  }
+
   .group-title {
     color: #444;
     font-size: 0.6rem;
@@ -22,6 +44,37 @@ export const Container = styled.aside`
     margin-bottom: 0.4rem;
     display: block;
     text-transform: uppercase;
+  }
+`;
+
+export const MobileTopBar = styled.div`
+  display: none;
+
+  @media (max-width: 768px) {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 1.25rem 0.9rem;
+    border-bottom: 1px solid #1a1a1a;
+    margin-bottom: 0.5rem;
+
+    strong {
+      font-size: 0.9rem;
+      color: #f2f2f2;
+      letter-spacing: 0.04em;
+    }
+
+    button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      border: 1px solid #242424;
+      background: #141414;
+      color: #f2f2f2;
+    }
   }
 `;
 

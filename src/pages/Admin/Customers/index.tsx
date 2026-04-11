@@ -78,7 +78,7 @@ export function AdminCustomers() {
             document.body.removeChild(link);
 
             toast.update(toastId, { render: 'Relatório Geral baixado!', type: 'success', isLoading: false, autoClose: 3000 });
-        } catch (err) {
+        } catch {
             toast.update(toastId, { render: 'Erro ao gerar relatório.', type: 'error', isLoading: false, autoClose: 3000 });
         }
     };
@@ -137,36 +137,77 @@ export function AdminCustomers() {
                 </S.ControlsGroup>
             </S.TopBar>
 
-            <S.Table>
-                <thead>
-                    <tr>
-                        <th>Nome</th>
-                        <th>CPF</th>
-                        <th>E-mail</th>
-                        <th>Contato</th>
-                        <th>Endereço</th>
-                        <th>Cadastro</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {loading ? (
-                        <tr><td colSpan={6} style={{ textAlign: 'center', padding: '30px', color: '#888' }}>Carregando dados...</td></tr>
-                    ) : users.length > 0 ? (
-                        users.map((user) => (
-                            <tr key={user.id}>
-                                <td><InfoCard value={user.name || '---'} /></td>
-                                <td><InfoCard value={user.cpf || '---'} /></td>
-                                <td><InfoCard value={user.email || '---'} /></td>
-                                <td><InfoCard value={user.phone || '---'} /></td>
-                                <td><InfoCard value={user.address || '---'} /></td>
-                                <td>{user.createdAt ? new Date(user.createdAt).toLocaleDateString('pt-BR') : '---'}</td>
-                            </tr>
-                        ))
-                    ) : (
-                        <tr><td colSpan={6} style={{ textAlign: 'center', padding: '30px', color: '#666' }}>Nenhum cliente encontrado.</td></tr>
-                    )}
-                </tbody>
-            </S.Table>
+            <S.DesktopTableWrapper>
+                <S.Table>
+                    <thead>
+                        <tr>
+                            <th>Nome</th>
+                            <th>CPF</th>
+                            <th>E-mail</th>
+                            <th>Contato</th>
+                            <th>Endereço</th>
+                            <th>Cadastro</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {loading ? (
+                            <tr><td colSpan={6} style={{ textAlign: 'center', padding: '30px', color: '#888' }}>Carregando dados...</td></tr>
+                        ) : users.length > 0 ? (
+                            users.map((user) => (
+                                <tr key={user.id}>
+                                    <td><InfoCard value={user.name || '---'} /></td>
+                                    <td><InfoCard value={user.cpf || '---'} /></td>
+                                    <td><InfoCard value={user.email || '---'} /></td>
+                                    <td><InfoCard value={user.phone || '---'} /></td>
+                                    <td><InfoCard value={user.address || '---'} /></td>
+                                    <td>{user.createdAt ? new Date(user.createdAt).toLocaleDateString('pt-BR') : '---'}</td>
+                                </tr>
+                            ))
+                        ) : (
+                            <tr><td colSpan={6} style={{ textAlign: 'center', padding: '30px', color: '#666' }}>Nenhum cliente encontrado.</td></tr>
+                        )}
+                    </tbody>
+                </S.Table>
+            </S.DesktopTableWrapper>
+
+            <S.MobileCards>
+                {loading ? (
+                    <S.EmptyStateCard>Carregando dados...</S.EmptyStateCard>
+                ) : users.length > 0 ? (
+                    users.map((user) => (
+                        <S.MobileCard key={user.id}>
+                            <S.MobileCardHeader>
+                                <div>
+                                    <strong>{user.name || '---'}</strong>
+                                    <span>{user.email || 'Sem e-mail'}</span>
+                                </div>
+                                <S.MobileBadge>Cliente</S.MobileBadge>
+                            </S.MobileCardHeader>
+
+                            <S.MobileFieldList>
+                                <S.MobileField>
+                                    <small>CPF</small>
+                                    <span>{user.cpf || '---'}</span>
+                                </S.MobileField>
+                                <S.MobileField>
+                                    <small>Contato</small>
+                                    <span>{user.phone || '---'}</span>
+                                </S.MobileField>
+                                <S.MobileField>
+                                    <small>Endereço</small>
+                                    <span>{user.address || '---'}</span>
+                                </S.MobileField>
+                                <S.MobileField>
+                                    <small>Cadastro</small>
+                                    <span>{user.createdAt ? new Date(user.createdAt).toLocaleDateString('pt-BR') : '---'}</span>
+                                </S.MobileField>
+                            </S.MobileFieldList>
+                        </S.MobileCard>
+                    ))
+                ) : (
+                    <S.EmptyStateCard>Nenhum cliente encontrado.</S.EmptyStateCard>
+                )}
+            </S.MobileCards>
 
             <Pagination
                 currentPage={currentPage}

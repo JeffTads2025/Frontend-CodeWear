@@ -24,6 +24,7 @@ export const Content = styled.main`
   padding: 2rem;
 
   @media (max-width: 768px) {
+    margin-top: 84px;
     margin-left: 0;
     width: 100%;
     padding: 1.25rem;

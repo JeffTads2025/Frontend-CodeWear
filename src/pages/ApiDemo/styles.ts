@@ -41,6 +41,14 @@ export const Header = styled.div`
     margin: 5px 0 0 0;
     font-size: 1rem;
   }
+
+  @media (max-width: 700px) {
+    align-items: flex-start;
+
+    h2 {
+      font-size: 1.5rem;
+    }
+  }
 `;
 
 export const Content = styled.div`
@@ -58,5 +66,81 @@ export const Content = styled.div`
   pre {
     color: #fff;
     font-family: 'Courier New', monospace;
+  }
+
+  .tab-list,
+  .button-row {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+
+  .tab-list {
+    margin-bottom: 20px;
+  }
+
+  .actions-panel {
+    margin-bottom: 20px;
+  }
+
+  .action-card {
+    margin-bottom: 20px;
+    padding: 15px;
+    background: #1a1a1a;
+    border-radius: 8px;
+  }
+
+  .fields-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 10px;
+    margin-bottom: 10px;
+  }
+
+  .fields-grid.two-columns {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .inline-fields {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    margin-bottom: 10px;
+    flex-wrap: wrap;
+  }
+
+  .json-output {
+    margin-top: 20px;
+  }
+
+  .json-output pre {
+    background: #1a1a1a;
+    padding: 15px;
+    border-radius: 8px;
+    font-size: 12px;
+    overflow: auto;
+    max-height: 400px;
+  }
+
+  input,
+  textarea {
+    min-width: 0;
+  }
+
+  @media (max-width: 700px) {
+    padding: 20px;
+
+    .tab-list > button,
+    .button-row > button {
+      width: 100%;
+    }
+
+    .fields-grid.two-columns {
+      grid-template-columns: 1fr;
+    }
+
+    .inline-fields > * {
+      width: 100%;
+    }
   }
 `;

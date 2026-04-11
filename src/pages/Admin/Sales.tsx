@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import {
     FiCalendar,
     FiDownload,
@@ -10,7 +10,6 @@ import { ButtonV2 } from '../../components/ButtonV2';
 import { InfoCard } from '../../components/InfoCard';
 import { InputV2 } from '../../components/InputV2';
 import { Pagination } from '../../components/Pagination';
-import * as XLSX from 'xlsx';
 import { toast } from 'react-toastify';
 import type { DashboardStats, OrderSummary, OrdersListResponse } from '../../types/api';
 import * as S from './styles';
@@ -34,7 +33,7 @@ export function AdminSales() {
         return new Date(now.getTime() - offset).toISOString().split('T')[0];
     });
 
-    async function loadSales() {
+    const loadSales = useCallback(async () => {
         try {
             const [year, month] = selectedDate.split('-');
 
@@ -50,10 +49,10 @@ export function AdminSales() {
                 totalRevenue: Number(statsRes.data?.totalRevenue || 0),
                 monthlyRevenue: Number(statsRes.data?.monthlyRevenue || 0)
             });
-        } catch (err) {
-            console.error('Erro ao carregar vendas', err);
+        } catch {
+            console.error('Erro ao carregar vendas');
         }
-    }
+    }, [page, selectedDate]);
 
     async function handleUpdateOrder(orderId: number, status: string) {
         try {
@@ -85,7 +84,7 @@ export function AdminSales() {
 
     useEffect(() => {
         loadSales();
-    }, [page, selectedDate]);
+    }, [loadSales]);
 
     const formatCurrency = (value: number | string | undefined) => {
         return new Intl.NumberFormat('pt-BR', {
@@ -103,6 +102,7 @@ export function AdminSales() {
 
     const handleExportExcel = async (mode: 'day' | 'month') => {
         try {
+            const XLSX = await import('xlsx');
             let exportData: OrderSummary[] = [];
             const [year, month] = selectedDate.split('-');
 
@@ -140,7 +140,7 @@ export function AdminSales() {
             const wb = XLSX.utils.book_new();
             XLSX.utils.book_append_sheet(wb, ws, 'Vendas');
             XLSX.writeFile(wb, `Relatorio_${mode === 'day' ? 'Dia' : 'Mes'}.xlsx`);
-        } catch (err) {
+        } catch {
             alert('Erro no Excel.');
         }
     };
@@ -198,77 +198,150 @@ export function AdminSales() {
                 </S.MetricCard>
             </S.MetricsRow>
 
-            <S.AuditTable>
-                <thead>
-                    <tr>
-                        <th>Cliente</th>
-                        <th>Endereço de Entrega</th>
-                        <th>Produtos</th>
-                        <th>Status</th>
-                        <th>Total</th>
-                        <th>Data</th>
-                        <th>Ações</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {orders.length > 0 ? (
-                        orders.map((order) => (
-                            <tr key={order.id}>
-                                <td>
-                                    <InfoCard value={order.User?.name || 'N/A'} />
-                                </td>
-                                <td>
-                                    <InfoCard value={order.address || 'N/A'} />
-                                </td>
-                                <td>
-                                    <InfoCard value={formatOrderItems(order.OrderItems)} />
-                                </td>
-                                <td>
-                                    <select
-                                        value={order.status}
-                                        onChange={(event) => void handleUpdateOrder(order.id, event.target.value)}
-                                        style={{
-                                            background: '#161616',
-                                            color: '#fff',
-                                            border: '1px solid #333',
-                                            borderRadius: '6px',
-                                            padding: '8px'
-                                        }}
-                                    >
-                                        <option value="pendente">Pendente</option>
-                                        <option value="pago">Pago</option>
-                                        <option value="enviado">Enviado</option>
-                                        <option value="cancelado">Cancelado</option>
-                                    </select>
-                                </td>
-                                <td><strong>{formatCurrency(order.totalValue)}</strong></td>
-                                <td>{new Date(order.createdAt).toLocaleDateString('pt-BR')}</td>
-                                <td>
-                                    <button
-                                        type="button"
-                                        onClick={() => void handleDeleteOrder(order.id)}
-                                        style={{
-                                            display: 'inline-flex',
-                                            alignItems: 'center',
-                                            gap: '6px',
-                                            background: '#2a0f12',
-                                            color: '#ff7b86',
-                                            border: '1px solid #5b1b24',
-                                            borderRadius: '8px',
-                                            padding: '8px 10px',
-                                            cursor: 'pointer'
-                                        }}
-                                    >
-                                        <FiTrash2 size={14} /> Remover
-                                    </button>
-                                </td>
-                            </tr>
-                        ))
-                    ) : (
-                        <tr><td colSpan={7} style={{ textAlign: 'center', padding: '20px' }}>Sem vendas registradas hoje.</td></tr>
-                    )}
-                </tbody>
-            </S.AuditTable>
+            <S.DesktopTableWrapper>
+                <S.AuditTable>
+                    <thead>
+                        <tr>
+                            <th>Cliente</th>
+                            <th>Endereço de Entrega</th>
+                            <th>Produtos</th>
+                            <th>Status</th>
+                            <th>Total</th>
+                            <th>Data</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {orders.length > 0 ? (
+                            orders.map((order) => (
+                                <tr key={order.id}>
+                                    <td>
+                                        <InfoCard value={order.User?.name || 'N/A'} />
+                                    </td>
+                                    <td>
+                                        <InfoCard value={order.address || 'N/A'} />
+                                    </td>
+                                    <td>
+                                        <InfoCard value={formatOrderItems(order.OrderItems)} />
+                                    </td>
+                                    <td>
+                                        <select
+                                            value={order.status}
+                                            onChange={(event) => void handleUpdateOrder(order.id, event.target.value)}
+                                            style={{
+                                                background: '#161616',
+                                                color: '#fff',
+                                                border: '1px solid #333',
+                                                borderRadius: '6px',
+                                                padding: '8px'
+                                            }}
+                                        >
+                                            <option value="pendente">Pendente</option>
+                                            <option value="pago">Pago</option>
+                                            <option value="enviado">Enviado</option>
+                                            <option value="cancelado">Cancelado</option>
+                                        </select>
+                                    </td>
+                                    <td><strong>{formatCurrency(order.totalValue)}</strong></td>
+                                    <td>{new Date(order.createdAt).toLocaleDateString('pt-BR')}</td>
+                                    <td>
+                                        <button
+                                            type="button"
+                                            onClick={() => void handleDeleteOrder(order.id)}
+                                            style={{
+                                                display: 'inline-flex',
+                                                alignItems: 'center',
+                                                gap: '6px',
+                                                background: '#2a0f12',
+                                                color: '#ff7b86',
+                                                border: '1px solid #5b1b24',
+                                                borderRadius: '8px',
+                                                padding: '8px 10px',
+                                                cursor: 'pointer'
+                                            }}
+                                        >
+                                            <FiTrash2 size={14} /> Remover
+                                        </button>
+                                    </td>
+                                </tr>
+                            ))
+                        ) : (
+                            <tr><td colSpan={7} style={{ textAlign: 'center', padding: '20px' }}>Sem vendas registradas hoje.</td></tr>
+                        )}
+                    </tbody>
+                </S.AuditTable>
+            </S.DesktopTableWrapper>
+
+            <S.MobileCards>
+                {orders.length > 0 ? (
+                    orders.map((order) => (
+                        <S.MobileCard key={order.id}>
+                            <S.MobileCardHeader>
+                                <div>
+                                    <strong>{order.User?.name || 'N/A'}</strong>
+                                    <span>{new Date(order.createdAt).toLocaleDateString('pt-BR')}</span>
+                                </div>
+                                <S.MobileBadge>{formatCurrency(order.totalValue)}</S.MobileBadge>
+                            </S.MobileCardHeader>
+
+                            <S.MobileFieldList>
+                                <S.MobileField>
+                                    <small>Entrega</small>
+                                    <span>{order.address || 'N/A'}</span>
+                                </S.MobileField>
+                                <S.MobileField>
+                                    <small>Produtos</small>
+                                    <span>{formatOrderItems(order.OrderItems)}</span>
+                                </S.MobileField>
+                                <S.MobileField>
+                                    <small>Status</small>
+                                    <span>{order.status}</span>
+                                </S.MobileField>
+                            </S.MobileFieldList>
+
+                            <S.MobileActions>
+                                <select
+                                    value={order.status}
+                                    onChange={(event) => void handleUpdateOrder(order.id, event.target.value)}
+                                    style={{
+                                        background: '#161616',
+                                        color: '#fff',
+                                        border: '1px solid #333',
+                                        borderRadius: '6px',
+                                        padding: '10px 12px'
+                                    }}
+                                >
+                                    <option value="pendente">Pendente</option>
+                                    <option value="pago">Pago</option>
+                                    <option value="enviado">Enviado</option>
+                                    <option value="cancelado">Cancelado</option>
+                                </select>
+
+                                <button
+                                    type="button"
+                                    onClick={() => void handleDeleteOrder(order.id)}
+                                    style={{
+                                        display: 'inline-flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        gap: '6px',
+                                        background: '#2a0f12',
+                                        color: '#ff7b86',
+                                        border: '1px solid #5b1b24',
+                                        borderRadius: '8px',
+                                        padding: '10px 12px',
+                                        cursor: 'pointer'
+                                    }}
+                                >
+                                    <FiTrash2 size={14} /> Remover
+                                </button>
+                            </S.MobileActions>
+                        </S.MobileCard>
+                    ))
+                ) : (
+                    <S.EmptyStateCard>Sem vendas registradas hoje.</S.EmptyStateCard>
+                )}
+            </S.MobileCards>
 
             {totalPages > 1 && (
                 <Pagination
