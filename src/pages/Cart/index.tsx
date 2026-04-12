@@ -6,12 +6,42 @@ import {
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { useCart } from '../../hooks/useCart';
+import { useAuth } from '../../hooks/useAuth';
 import { usersApi, ordersApi } from '../../services/api';
 import { Button } from '../../components/Button';
 import * as S from './styles';
 
+function getStoredToken(): string | null {
+  return localStorage.getItem('@CodeWear:token');
+}
+
+function getTotalQuantityByProductId(cart: Array<{ id: number; quantity: number }>, productId: number): number {
+  return cart.filter((item) => item.id === productId).reduce((accumulator, item) => accumulator + item.quantity, 0);
+}
+
+function hasCartStockConflict(cart: Array<{ id: number; quantity: number; stock: number }>): boolean {
+  return cart.some((item) => getTotalQuantityByProductId(cart, item.id) > item.stock);
+}
+
+function formatMoney(value: number): string {
+  return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
+}
+
+function validateCheckoutBeforeSubmit(hasGlobalStockError: boolean, address: string): string | null {
+  if (hasGlobalStockError) {
+    return 'Ajuste o estoque antes de finalizar!';
+  }
+
+  if (!address.trim()) {
+    return 'Por favor, informe um endereço de entrega.';
+  }
+
+  return null;
+}
+
 export const Cart = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const { cart, removeFromCart, updateCartQuantity, cartTotal, clearCart } = useCart();
 
   const [paymentMethod, setPaymentMethod] = useState<'Cartão' | 'Pix'>('Cartão');
@@ -21,10 +51,14 @@ export const Cart = () => {
   const [isEditingAddress, setIsEditingAddress] = useState(false);
   const [loadingCheckout, setLoadingCheckout] = useState(false);
 
-  // Busca o endereço do usuário do backend ao montar o componente
   useEffect(() => {
+    if (typeof user?.address === 'string') {
+      setAddress(user.address);
+      return;
+    }
+
     async function loadUserData() {
-      const token = localStorage.getItem('@CodeWear:token');
+      const token = getStoredToken();
       if (!token) return;
 
       try {
@@ -38,26 +72,18 @@ export const Cart = () => {
     }
 
     loadUserData();
-  }, []);
+  }, [user?.address]);
 
-  const getTotalQuantityById = (id: number) => {
-    return cart.filter(item => item.id === id).reduce((acc, item) => acc + item.quantity, 0);
-  };
-
-  const hasGlobalStockError = cart.some(item => getTotalQuantityById(item.id) > item.stock);
+  const hasGlobalStockError = hasCartStockConflict(cart);
 
   async function handleCheckout() {
-    if (hasGlobalStockError) {
-      toast.error('Ajuste o estoque antes de finalizar!');
+    const token = getStoredToken();
+    const checkoutValidationError = validateCheckoutBeforeSubmit(hasGlobalStockError, address);
+    if (checkoutValidationError) {
+      toast[hasGlobalStockError ? 'error' : 'warn'](checkoutValidationError);
       return;
     }
 
-    if (!address.trim()) {
-      toast.warn('Por favor, informe um endereço de entrega.');
-      return;
-    }
-
-    const token = localStorage.getItem('@CodeWear:token');
     if (!token) return navigate('/login');
 
     setLoadingCheckout(true);
@@ -77,9 +103,6 @@ export const Cart = () => {
     }
   }
 
-  const formatMoney = (value: number) =>
-    new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
-
   return (
     <S.Container>
       <S.Header>
@@ -98,10 +121,10 @@ export const Cart = () => {
             </div>
           ) : (
             cart.map(item => {
-              const isAtLimit = getTotalQuantityById(item.id) >= item.stock;
+              const isAtLimit = getTotalQuantityByProductId(cart, item.id) >= item.stock;
               return (
                 <S.ItemCard key={item.cartId}>
-                  <img src={item.image_url} alt={item.name} />
+                  <img src={item.image_url} alt={item.name} loading="lazy" decoding="async" />
                   <div className="info">
                     <h3>{item.name}</h3>
                     <p style={{ fontSize: '12px', color: isAtLimit ? '#f59e0b' : '#10b981' }}>

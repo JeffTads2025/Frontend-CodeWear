@@ -23,6 +23,16 @@ interface OrderCardData {
   items: OrderCardItem[];
 }
 
+function getRawOrders(dataFromServer: OrdersListResponse | OrderSummary[]): OrderSummary[] {
+  return Array.isArray(dataFromServer)
+    ? dataFromServer
+    : (dataFromServer.orders || []);
+}
+
+function getOrdersTotalPages(dataFromServer: OrdersListResponse | OrderSummary[]): number {
+  return Array.isArray(dataFromServer) ? 1 : (dataFromServer.totalPages || 1);
+}
+
 function mapOrderItems(items: OrderItemSummary[] | undefined): OrderCardItem[] {
   return (items ?? []).map((item) => ({
     name: item.Product?.name || 'Produto indisponível',
@@ -40,6 +50,21 @@ function mapOrderCard(order: OrderSummary): OrderCardData {
   };
 }
 
+function formatOrderDate(createdAt: string): string {
+  return new Date(createdAt).toLocaleDateString('pt-BR');
+}
+
+function formatOrderTotal(total: number): string {
+  return new Intl.NumberFormat('pt-BR', {
+    style: 'currency',
+    currency: 'BRL'
+  }).format(total);
+}
+
+function isPaidOrder(status: string): boolean {
+  return status === 'pago';
+}
+
 export function Orders() {
   const [orders, setOrders] = useState<OrderCardData[]>([]);
   const [loading, setLoading] = useState(true);
@@ -49,29 +74,15 @@ export function Orders() {
   const loadOrders = useCallback(async () => {
     setLoading(true);
     try {
-      // Faz a chamada para a API
       const response = await api.get<OrdersListResponse>(`/orders?page=${page}`);
-
-      /**
-       * LÓGICA DE COMPATIBILIDADE (HÍBRIDA):
-       * Se o back-end enviar um Array direto, usamos 'response.data'.
-       * Se o back-end enviar um Objeto { orders: [...] }, usamos 'response.data.orders'.
-       */
       const dataFromServer = response.data;
-      const rawOrders = Array.isArray(dataFromServer)
-        ? dataFromServer
-        : (dataFromServer.orders || []);
-
-      // Define o total de páginas (se o back não enviar, assume 1)
-      const totalP = dataFromServer.totalPages || 1;
-      setTotalPages(totalP);
-
-      // Formatação dos dados para a interface
+      const rawOrders = getRawOrders(dataFromServer);
+      setTotalPages(getOrdersTotalPages(dataFromServer));
       const formatted = rawOrders.map(mapOrderCard);
 
       setOrders(formatted);
-    } catch (err) {
-      console.error("Erro ao carregar pedidos:", err);
+    } catch (error) {
+      console.error("Erro ao carregar pedidos:", error);
       setOrders([]);
     } finally {
       setLoading(false);
@@ -108,6 +119,8 @@ export function Orders() {
               <img
                 src={order.items[0]?.image}
                 alt={order.items[0]?.name}
+                loading="lazy"
+                decoding="async"
                 onError={(event) => { event.currentTarget.src = 'https://via.placeholder.com/150'; }}
               />
 
@@ -118,22 +131,19 @@ export function Orders() {
                   {order.items.length > 1 && ` (+${order.items.length - 1} itens)`}
                 </h3>
                 <div className="status">
-                  {order.status === 'pago' ? (
+                  {isPaidOrder(order.status) ? (
                     <FiCheckCircle color="#10b981" />
                   ) : (
                     <FiClock color="#f59e0b" />
                   )}
                   <span>
-                    {order.status.toUpperCase()} • {new Date(order.createdAt).toLocaleDateString('pt-BR')}
+                    {order.status.toUpperCase()} • {formatOrderDate(order.createdAt)}
                   </span>
                 </div>
               </div>
 
               <div className="price">
-                {new Intl.NumberFormat('pt-BR', {
-                  style: 'currency',
-                  currency: 'BRL'
-                }).format(order.total)}
+                {formatOrderTotal(order.total)}
               </div>
             </S.OrderCard>
           ))

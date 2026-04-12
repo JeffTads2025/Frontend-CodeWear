@@ -147,8 +147,8 @@ export const cartApi = {
 // ==================== ORDERS CRUD ====================
 export const ordersApi = {
   // READ - Listar pedidos do usuário
-  async getMyOrders(): Promise<OrdersListResponse> {
-    const response = await api.get<OrdersListResponse>('/orders');
+  async getMyOrders(params?: { page?: number }): Promise<OrdersListResponse> {
+    const response = await api.get<OrdersListResponse>('/orders', { params });
     return response.data;
   },
 

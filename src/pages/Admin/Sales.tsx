@@ -14,8 +14,86 @@ import { toast } from 'react-toastify';
 import type { DashboardStats, OrderSummary, OrdersListResponse } from '../../types/api';
 import * as S from './styles';
 
+type SalesExportRow = {
+    'Cliente': string;
+    'Endereço': string;
+    'Produtos': string;
+    'Data': string;
+    'Total (R$)': string;
+};
+
 function formatOrderItems(orderItems: OrderSummary['OrderItems']): string {
     return orderItems?.map((item) => `${item.quantity}x ${item.Product?.name}`).join(', ') || 'N/A';
+}
+
+function getInitialSelectedDate(): string {
+    const now = new Date();
+    const offset = now.getTimezoneOffset() * 60000;
+    return new Date(now.getTime() - offset).toISOString().split('T')[0];
+}
+
+function getSelectedMonthAndYear(selectedDate: string): { year: string; month: string } {
+    const [year, month] = selectedDate.split('-');
+    return { year, month };
+}
+
+function formatCurrency(value: number | string | undefined): string {
+    return new Intl.NumberFormat('pt-BR', {
+        style: 'currency',
+        currency: 'BRL'
+    }).format(Number(value) || 0);
+}
+
+function formatSelectedDate(date: string): string {
+    if (!date) {
+        return '';
+    }
+
+    const [year, month, day] = date.split('-');
+    return `${day}/${month}/${year}`;
+}
+
+function formatOrderDate(createdAt: string): string {
+    return new Date(createdAt).toLocaleDateString('pt-BR');
+}
+
+function calculateDailyRevenue(orders: OrderSummary[]): number {
+    return orders.reduce((accumulator, order) => accumulator + Number(order.totalValue || 0), 0);
+}
+
+function buildSalesExportRows(exportData: OrderSummary[]): SalesExportRow[] {
+    const rows = exportData.map((order) => ({
+        'Cliente': order.User?.name || 'N/A',
+        'Endereço': order.address || 'N/A',
+        'Produtos': formatOrderItems(order.OrderItems),
+        'Data': formatOrderDate(order.createdAt),
+        'Total (R$)': Number(order.totalValue || 0).toLocaleString('pt-BR', {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+        })
+    }));
+
+    const totalSoma = exportData.reduce((accumulator, current) => accumulator + Number(current.totalValue || 0), 0);
+
+    rows.push({
+        'Cliente': '---',
+        'Endereço': '---',
+        'Produtos': '---',
+        'Data': 'SOMA TOTAL:',
+        'Total (R$)': totalSoma.toLocaleString('pt-BR', { minimumFractionDigits: 2 })
+    });
+
+    return rows;
+}
+
+function mergeUpdatedOrder(currentOrder: OrderSummary, updatedOrder: OrderSummary): OrderSummary {
+    return {
+        ...currentOrder,
+        ...updatedOrder,
+        User: updatedOrder.User ?? currentOrder.User,
+        OrderItems: updatedOrder.OrderItems ?? currentOrder.OrderItems,
+        orderItems: updatedOrder.orderItems ?? currentOrder.orderItems,
+    };
 }
 
 export function AdminSales() {
@@ -27,15 +105,11 @@ export function AdminSales() {
     const [page, setPage] = useState(1);
     const [totalPages, setTotalPages] = useState(1);
 
-    const [selectedDate, setSelectedDate] = useState(() => {
-        const now = new Date();
-        const offset = now.getTimezoneOffset() * 60000;
-        return new Date(now.getTime() - offset).toISOString().split('T')[0];
-    });
+    const [selectedDate, setSelectedDate] = useState(getInitialSelectedDate);
 
     const loadSales = useCallback(async () => {
         try {
-            const [year, month] = selectedDate.split('-');
+            const { year, month } = getSelectedMonthAndYear(selectedDate);
 
             const [ordersRes, statsRes] = await Promise.all([
                 api.get<OrdersListResponse>(`/admin/all-orders?page=${page}&date=${selectedDate}`),
@@ -56,9 +130,11 @@ export function AdminSales() {
 
     async function handleUpdateOrder(orderId: number, status: string) {
         try {
-            await ordersApi.update(orderId, { status });
+            const response = await ordersApi.update(orderId, { status });
+            setOrders((currentOrders) => currentOrders.map((order) => (
+                order.id === orderId ? mergeUpdatedOrder(order, response.order) : order
+            )));
             toast.success('Pedido atualizado com sucesso.');
-            await loadSales();
         } catch (error) {
             console.error('Erro ao atualizar pedido', error);
             toast.error('Erro ao atualizar pedido.');
@@ -74,8 +150,15 @@ export function AdminSales() {
 
         try {
             await ordersApi.delete(orderId);
+            const shouldGoToPreviousPage = orders.length === 1 && page > 1;
+
+            if (shouldGoToPreviousPage) {
+                setPage((currentPage) => Math.max(currentPage - 1, 1));
+            } else {
+                await loadSales();
+            }
+
             toast.success('Pedido removido com sucesso.');
-            await loadSales();
         } catch (error) {
             console.error('Erro ao remover pedido', error);
             toast.error('Erro ao remover pedido.');
@@ -86,25 +169,11 @@ export function AdminSales() {
         loadSales();
     }, [loadSales]);
 
-    const formatCurrency = (value: number | string | undefined) => {
-        return new Intl.NumberFormat('pt-BR', {
-            style: 'currency',
-            currency: 'BRL'
-        }).format(Number(value) || 0);
-    };
-
-    const formatSelectedDate = (date: string) => {
-        if (!date) return '';
-
-        const [year, month, day] = date.split('-');
-        return `${day}/${month}/${year}`;
-    };
-
     const handleExportExcel = async (mode: 'day' | 'month') => {
         try {
             const XLSX = await import('xlsx');
             let exportData: OrderSummary[] = [];
-            const [year, month] = selectedDate.split('-');
+            const { year, month } = getSelectedMonthAndYear(selectedDate);
 
             if (mode === 'day') {
                 exportData = orders;
@@ -118,23 +187,7 @@ export function AdminSales() {
                 return;
             }
 
-            const rows = exportData.map((order) => ({
-                'Cliente': order.User?.name || 'N/A',
-                'Endereço': order.address || 'N/A',
-                'Produtos': formatOrderItems(order.OrderItems),
-                'Data': new Date(order.createdAt).toLocaleDateString('pt-BR'),
-                'Total (R$)': Number(order.totalValue || 0).toLocaleString('pt-BR', {
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 2
-                })
-            }));
-
-            const totalSoma = exportData.reduce((acc, current) => acc + Number(current.totalValue || 0), 0);
-            rows.push({
-                'Cliente': '---', 'Endereço': '---', 'Produtos': '---',
-                'Data': 'SOMA TOTAL:',
-                'Total (R$)': totalSoma.toLocaleString('pt-BR', { minimumFractionDigits: 2 })
-            });
+            const rows = buildSalesExportRows(exportData);
 
             const ws = XLSX.utils.json_to_sheet(rows);
             const wb = XLSX.utils.book_new();
@@ -193,7 +246,7 @@ export function AdminSales() {
                 <S.MetricCard>
                     <span>FATURAMENTO DO DIA</span>
                     <h2>
-                        {formatCurrency(orders.reduce((acc, o) => acc + Number(o.totalValue), 0))}
+                        {formatCurrency(calculateDailyRevenue(orders))}
                     </h2>
                 </S.MetricCard>
             </S.MetricsRow>
@@ -243,7 +296,7 @@ export function AdminSales() {
                                         </select>
                                     </td>
                                     <td><strong>{formatCurrency(order.totalValue)}</strong></td>
-                                    <td>{new Date(order.createdAt).toLocaleDateString('pt-BR')}</td>
+                                    <td>{formatOrderDate(order.createdAt)}</td>
                                     <td>
                                         <button
                                             type="button"
@@ -279,7 +332,7 @@ export function AdminSales() {
                             <S.MobileCardHeader>
                                 <div>
                                     <strong>{order.User?.name || 'N/A'}</strong>
-                                    <span>{new Date(order.createdAt).toLocaleDateString('pt-BR')}</span>
+                                    <span>{formatOrderDate(order.createdAt)}</span>
                                 </div>
                                 <S.MobileBadge>{formatCurrency(order.totalValue)}</S.MobileBadge>
                             </S.MobileCardHeader>

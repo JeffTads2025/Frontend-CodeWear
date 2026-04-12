@@ -11,12 +11,12 @@ export const Container = styled.div`
 
 export const ProductGrid = styled.div`
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-  gap: 20px;
+  grid-template-columns: repeat(auto-fill, minmax(205px, 1fr));
+  gap: 24px;
 
   @media (max-width: 768px) {
     grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-    gap: 12px;
+    gap: 14px;
   }
 
   @media (max-width: 420px) {

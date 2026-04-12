@@ -12,8 +12,32 @@ import { ButtonV2 } from '../../components/ButtonV2';
 import type { ApiErrorResponse, DashboardStats, Product, ProductUpdateInput } from '../../types/api';
 import * as S from './styles';
 
+type EditableProductField = 'name' | 'price' | 'stock' | 'image_url';
+
 function isProductsListResponse(value: Product[] | { products: Product[] }): value is { products: Product[] } {
   return !Array.isArray(value);
+}
+
+function formatDashboardCurrency(value: number | undefined): string {
+  return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value || 0);
+}
+
+function parseProductFieldValue(field: EditableProductField, value: string): string | number {
+  return field === 'price' || field === 'stock' ? Number(value) : value;
+}
+
+function replaceProduct(currentProducts: Product[], nextProduct: Product): Product[] {
+  return currentProducts.map((product) => (
+    product.id === nextProduct.id ? nextProduct : product
+  ));
+}
+
+function removeProduct(currentProducts: Product[], productId: number): Product[] {
+  return currentProducts.filter((product) => product.id !== productId);
+}
+
+function prependProduct(currentProducts: Product[], nextProduct: Product): Product[] {
+  return [nextProduct, ...currentProducts];
 }
 
 export function Admin() {
@@ -26,11 +50,18 @@ export function Admin() {
   const [stock, setStock] = useState('');
   const [image, setImage] = useState('');
 
+  function resetProductForm() {
+    setName('');
+    setPrice('');
+    setStock('');
+    setImage('');
+  }
+
   const loadAdminData = useCallback(async () => {
     try {
       const [statsRes, productsRes] = await Promise.all([
         adminApi.getDashboard(),
-        productsApi.getAll()
+        productsApi.getAll({ page: 1, limit: 50 })
       ]);
       setStats(statsRes);
       const pData = isProductsListResponse(productsRes) ? productsRes.products : productsRes;
@@ -47,18 +78,18 @@ export function Admin() {
   // FUNÇÃO DE EDIÇÃO (ENTER)
   async function handleUpdateProduct(id: number, updatedData: ProductUpdateInput) {
     try {
-      await productsApi.update(id, updatedData);
+      const response = await productsApi.update(id, updatedData);
+      setProducts((currentProducts) => replaceProduct(currentProducts, response.product));
       toast.success('Alteração salva! ✅', { autoClose: 1000 });
-      loadAdminData();
     } catch {
       toast.error('Erro ao atualizar dados do produto.');
     }
   }
 
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>, id: number, field: string) => {
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>, id: number, field: EditableProductField) => {
     if (e.key === 'Enter') {
       const value = e.currentTarget.value;
-      const formattedValue = (field === 'price' || field === 'stock') ? Number(value) : value;
+      const formattedValue = parseProductFieldValue(field, value);
       handleUpdateProduct(id, { [field]: formattedValue });
       e.currentTarget.blur(); // Tira o foco após salvar
     }
@@ -69,8 +100,8 @@ export function Admin() {
     if (window.confirm('Deseja realmente excluir este produto?')) {
       try {
         await productsApi.delete(id);
+        setProducts((currentProducts) => removeProduct(currentProducts, id));
         toast.success('Produto removido! 🗑️');
-        loadAdminData();
       } catch (error) {
         const errorMessage = axios.isAxiosError<ApiErrorResponse>(error)
           ? error.response?.data?.error || error.response?.data?.message || 'Erro ao excluir produto.'
@@ -85,15 +116,15 @@ export function Admin() {
   async function handleAddProduct(e: React.FormEvent) {
     e.preventDefault();
     try {
-      await productsApi.create({
+      const response = await productsApi.create({
         name,
         price: Number(price),
         stock: Number(stock),
         image_url: image,
         description: "Produto adicionado via painel admin"
       });
-      setName(''); setPrice(''); setStock(''); setImage('');
-      loadAdminData();
+      setProducts((currentProducts) => prependProduct(currentProducts, response.product));
+      resetProductForm();
       toast.success('Produto cadastrado com sucesso!');
     } catch {
       toast.error('Erro ao cadastrar produto.');
@@ -114,7 +145,7 @@ export function Admin() {
       <S.StatsGrid>
         <S.StatCard>
           <div className="icon-box" style={{ background: '#252101', color: '#ffcc00' }}><FiDollarSign /></div>
-          <div><span>Faturamento</span><h3>{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(stats.totalRevenue || 0)}</h3></div>
+          <div><span>Faturamento</span><h3>{formatDashboardCurrency(stats.totalRevenue)}</h3></div>
         </S.StatCard>
         <S.StatCard>
           <div className="icon-box" style={{ background: '#1a1a00', color: '#d4af37' }}><FiUsers /></div>
@@ -158,11 +189,18 @@ export function Admin() {
         </S.Card>
 
         <S.Card>
-          <h3><FiPackage /> Itens em Estoque</h3>
+          <h3 style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+            <span style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <FiPackage /> Itens em Estoque
+            </span>
+            <span style={{ fontSize: '0.78rem', color: '#00ff88', fontWeight: 700, letterSpacing: '0.05em' }}>
+              PRODUTOS CADASTRADOS: {products.length}
+            </span>
+          </h3>
           <S.ProductList>
             {products.map(product => (
               <div key={product.id} className="product-item">
-                <img src={product.image_url} alt="" style={{ width: '60px', height: '60px', borderRadius: '8px', objectFit: 'cover' }} />
+                <img src={product.image_url} alt="" loading="lazy" decoding="async" style={{ width: '60px', height: '60px', borderRadius: '8px', objectFit: 'cover' }} />
 
                 <div className="product-content">
                   <input

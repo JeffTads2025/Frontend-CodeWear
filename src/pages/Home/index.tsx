@@ -1,12 +1,38 @@
 import { useEffect, useState, useCallback } from 'react';
 import { toast } from 'react-toastify';
+import { useNavigate } from 'react-router-dom';
 import api from '../../services/api';
 import { useCart } from '../../hooks/useCart';
+import { useAuth } from '../../hooks/useAuth';
 import { ProductCard } from '../../components/ProductCard';
 import type { Product } from '../../components/ProductCard';
 import * as S from './styles';
 
+function getProductsFromResponse(data: Product[] | { products?: Product[] }): Product[] {
+  if (Array.isArray(data)) {
+    return data;
+  }
+
+  return Array.isArray(data.products) ? data.products : [];
+}
+
+function getCartQuantityByProductId(cart: Array<{ id: number; quantity: number }>, productId: number): number {
+  return cart
+    .filter((item) => item.id === productId)
+    .reduce((accumulator, item) => accumulator + item.quantity, 0);
+}
+
+function getSelectedQuantity(qtySelected: Record<number, number>, productId: number): number {
+  return qtySelected[productId] || 1;
+}
+
+function exceedsAvailableStock(product: Product, alreadyInCart: number, quantityToAdd: number): boolean {
+  return alreadyInCart + quantityToAdd > product.stock;
+}
+
 export function Home() {
+  const navigate = useNavigate();
+  const { token } = useAuth();
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
@@ -17,9 +43,8 @@ export function Home() {
   const loadProducts = useCallback(async () => {
     setLoading(true);
     try {
-      const response = await api.get('/products');
-      const data = response.data.products || response.data;
-      setProducts(Array.isArray(data) ? data : []);
+      const response = await api.get('/products', { params: { page: 1, limit: 50 } });
+      setProducts(getProductsFromResponse(response.data));
     } catch (error) {
       console.error('Erro ao carregar produtos:', error);
       setProducts([]);
@@ -30,18 +55,14 @@ export function Home() {
 
   useEffect(() => {
     loadProducts();
-    window.addEventListener('focus', loadProducts);
-    return () => window.removeEventListener('focus', loadProducts);
   }, [loadProducts]);
 
   const getQtyInCart = (productId: number) => {
-    return cart
-      .filter(item => item.id === productId)
-      .reduce((acc, item) => acc + item.quantity, 0);
+    return getCartQuantityByProductId(cart, productId);
   };
 
   const handleQtyChange = (productId: number, type: 'plus' | 'minus') => {
-    const currentQty = qtySelected[productId] || 1;
+    const currentQty = getSelectedQuantity(qtySelected, productId);
     const alreadyInCart = getQtyInCart(productId);
     const product = products.find(p => p.id === productId);
     if (!product) return;
@@ -58,15 +79,21 @@ export function Home() {
   };
 
   const handleBuy = (product: Product) => {
-    const qtyToAdd = qtySelected[product.id] || 1;
+    if (!token) {
+      toast.warn('Faça login para adicionar produtos ao carrinho.');
+      navigate('/login');
+      return;
+    }
+
+    const qtyToAdd = getSelectedQuantity(qtySelected, product.id);
     const alreadyInCart = getQtyInCart(product.id);
 
-    if (alreadyInCart + qtyToAdd > product.stock) {
+    if (exceedsAvailableStock(product, alreadyInCart, qtyToAdd)) {
       toast.error(`Impossível adicionar! Estoque: ${product.stock}. Você já possui ${alreadyInCart} un. no carrinho.`, { theme: 'dark' });
       return;
     }
 
-    addToCart(product, qtyToAdd);
+    void addToCart(product, qtyToAdd);
     setQtySelected(prev => ({ ...prev, [product.id]: 1 }));
   };
 
@@ -84,7 +111,7 @@ export function Home() {
         ) : (
           <S.ProductGrid>
             {products.map(product => {
-              const qty = qtySelected[product.id] || 1;
+              const qty = getSelectedQuantity(qtySelected, product.id);
               const alreadyInCart = getQtyInCart(product.id);
 
               return (

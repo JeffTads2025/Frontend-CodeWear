@@ -19,6 +19,30 @@ interface CartContextData {
   loadCart: () => Promise<void>;
 }
 
+function hasStoredToken(): boolean {
+  return Boolean(localStorage.getItem('@CodeWear:token'));
+}
+
+function mapCartItems(cartEntries: Array<{
+  id: number;
+  quantity: number;
+  Product: Product;
+}>): CartItem[] {
+  return cartEntries.map((item) => ({
+    id: item.Product.id,
+    cartId: item.id,
+    name: item.Product.name,
+    price: item.Product.price,
+    image_url: item.Product.image_url,
+    stock: item.Product.stock,
+    quantity: item.quantity
+  }));
+}
+
+function calculateCartTotal(cart: CartItem[]): number {
+  return cart.reduce((accumulator, item) => accumulator + (item.price * item.quantity), 0);
+}
+
 const CartContext = createContext<CartContextData>({} as CartContextData);
 
 export function CartProvider({ children }: { children: ReactNode }) {
@@ -34,24 +58,13 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   async function loadCart() {
     try {
-      const token = localStorage.getItem('@CodeWear:token');
-      if (!token) {
+      if (!hasStoredToken()) {
         setCart([]);
         return;
       }
 
       const cartEntries = await cartApi.getAll();
-      const formatted: CartItem[] = cartEntries.map((item) => ({
-        id: item.Product.id,
-        cartId: item.id,
-        name: item.Product.name,
-        price: item.Product.price,
-        image_url: item.Product.image_url,
-        stock: item.Product.stock,
-        quantity: item.quantity
-      }));
-
-      setCart(formatted);
+      setCart(mapCartItems(cartEntries));
     } catch (error) {
       console.error('Erro ao carregar carrinho', error);
     }
@@ -123,7 +136,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
     }
   }
 
-  const cartTotal = cart.reduce((acc, item) => acc + (item.price * item.quantity), 0);
+  const cartTotal = calculateCartTotal(cart);
 
   return (
     <CartContext.Provider value={{ cart, addToCart, removeFromCart, updateCartQuantity, cartTotal, clearCart, loadCart }}>

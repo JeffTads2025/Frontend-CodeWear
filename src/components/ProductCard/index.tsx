@@ -35,6 +35,8 @@ export const ProductCard = ({
                 <img
                     src={product.image_url}
                     alt={product.name}
+                    loading="lazy"
+                    decoding="async"
                     onClick={onImageClick}
                     style={{ cursor: 'zoom-in' }}
                 />
@@ -55,6 +57,17 @@ export const ProductCard = ({
                             ? '❌ Esgotado'
                             : '⚠️ No limite'
                         : `✅ Disp: ${product.stock} un (No cart: ${alreadyInCart})`}
+                </p>
+
+                <p
+                    style={{
+                        fontSize: '0.85rem',
+                        color: '#999',
+                        margin: '8px 0',
+                        textAlign: 'left',
+                    }}
+                >
+                    Tamanho único - Unissex
                 </p>
 
                 <div className="footer-card">

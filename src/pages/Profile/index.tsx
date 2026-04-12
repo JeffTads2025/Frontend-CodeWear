@@ -10,9 +10,86 @@ import { maskCPF, sanitizeCPF, validateCPF } from '../../utils/cpf';
 import type { ApiErrorResponse, UserUpdateInput } from '../../types/api';
 import * as S from './styles';
 
+type ProfileFormData = {
+  name: string;
+  phone: string;
+  address: string;
+  cpf: string;
+  password: string;
+};
+
+function maskPhone(value: string): string {
+  return value
+    .replace(/\D/g, '')
+    .replace(/(\d{2})(\d)/, '($1) $2')
+    .replace(/(\d{5})(\d{1,4})/, '$1-$2')
+    .replace(/(-\d{4})\d+?$/, '$1');
+}
+
+function isProfileDataComplete(user: {
+  cpf?: string;
+  phone?: string;
+  address?: string;
+} | null): boolean {
+  return Boolean(user?.cpf && user?.phone && typeof user?.address === 'string');
+}
+
+function validatePasswordFields(password: string, confirmPassword: string): string | null {
+  if (password.length === 0) {
+    return null;
+  }
+
+  const cleanPassword = password.trim();
+  const cleanConfirmPassword = confirmPassword.trim();
+
+  if (cleanPassword.length < 8) {
+    return 'Senha mínima: 8 caracteres.';
+  }
+
+  if (cleanPassword !== cleanConfirmPassword) {
+    return 'As senhas não coincidem!';
+  }
+
+  return null;
+}
+
+function buildProfileUpdateData(formData: ProfileFormData): UserUpdateInput {
+  const cleanCPF = sanitizeCPF(formData.cpf);
+  const cleanPhone = formData.phone.replace(/\D/g, '');
+
+  const updateData: UserUpdateInput = {
+    name: formData.name,
+    phone: cleanPhone,
+    address: formData.address,
+    cpf: cleanCPF
+  };
+
+  if (formData.password.trim() !== '') {
+    updateData.password = formData.password.trim();
+  }
+
+  return updateData;
+}
+
+function formatProfileFormUser(nextUser: {
+  name?: string;
+  email?: string;
+  phone?: string;
+  address?: string;
+  cpf?: string;
+}) {
+  return {
+    name: nextUser.name || '',
+    email: nextUser.email || '',
+    phone: maskPhone(nextUser.phone || ''),
+    address: nextUser.address || '',
+    cpf: maskCPF(nextUser.cpf || '')
+  };
+}
+
 export function Profile() {
   const navigate = useNavigate();
-  const { signOut, updateUser } = useAuth();
+  const { user, signOut, updateUser } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
   const [loading, setLoading] = useState(false);
   const [isCancellingAccount, setIsCancellingAccount] = useState(false);
@@ -25,48 +102,50 @@ export function Profile() {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
 
-  // FUNÇÃO DE MÁSCARA: Transforma números puros em 000.000.000-00
-  // FUNÇÃO DE MÁSCARA PARA TELEFONE: (00) 00000-0000
-  const maskPhone = (value: string) => {
-    return value
-      .replace(/\D/g, '')
-      .replace(/(\d{2})(\d)/, '($1) $2')
-      .replace(/(\d{5})(\d{1,4})/, '$1-$2')
-      .replace(/(-\d{4})\d+?$/, '$1');
+  const hydrateProfileForm = (nextUser: {
+    name?: string;
+    email?: string;
+    phone?: string;
+    address?: string;
+    cpf?: string;
+  }) => {
+    const formattedUser = formatProfileFormUser(nextUser);
+    setName(formattedUser.name);
+    setEmail(formattedUser.email);
+    setPhone(formattedUser.phone);
+    setAddress(formattedUser.address);
+    setCpf(formattedUser.cpf);
   };
 
   useEffect(() => {
+    if (user) {
+      hydrateProfileForm(user);
+    }
+
+    if (isProfileDataComplete(user)) {
+      return;
+    }
+
     async function loadProfile() {
       try {
-        const user = await usersApi.getProfile();
-
-        setName(user.name);
-        setEmail(user.email);
-        setPhone(maskPhone(user.phone || ''));
-        setAddress(user.address || '');
-        // APLICA A MÁSCARA AO CARREGAR
-        setCpf(maskCPF(user.cpf || ''));
+        const profile = await usersApi.getProfile();
+        hydrateProfileForm(profile);
       } catch {
         toast.error('Erro ao carregar dados do perfil.');
       }
     }
     loadProfile();
-  }, []);
+  }, [user]);
 
   async function handleSave() {
-    if (password.length > 0) {
-      const cleanPassword = password.trim();
-      const cleanConfirmPassword = confirmPassword.trim();
-
-      if (cleanPassword.length < 8) return toast.error('Senha mínima: 8 caracteres.');
-      if (cleanPassword !== cleanConfirmPassword) return toast.error('As senhas não coincidem!');
+    const passwordValidationError = validatePasswordFields(password, confirmPassword);
+    if (passwordValidationError) {
+      return toast.error(passwordValidationError);
     }
 
     setLoading(true);
     try {
-      // TRATAMENTO: Envia apenas números para o Back-end (evita erro 400/404)
       const cleanCPF = sanitizeCPF(cpf);
-      const cleanPhone = phone.replace(/\D/g, '');
 
       if (cleanCPF && !validateCPF(cleanCPF)) {
         toast.error('CPF inválido.');
@@ -74,16 +153,15 @@ export function Profile() {
         return;
       }
 
-      const updateData: UserUpdateInput = {
+      const updateData = buildProfileUpdateData({
         name,
-        phone: cleanPhone,
+        phone,
         address,
-        cpf: cleanCPF
-      };
+        cpf,
+        password
+      });
+      const cleanPhone = updateData.phone || '';
 
-      if (password.trim() !== '') updateData.password = password.trim();
-
-      // Rota baseada no seu controller (updateUser)
       await usersApi.updateProfile(updateData);
       const refreshedUser = await usersApi.getProfile();
       updateUser(refreshedUser);

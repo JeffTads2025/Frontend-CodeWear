@@ -56,7 +56,7 @@ export function Login() {
   return (
     <S.Container>
       <S.Content>
-        <S.FormCard onSubmit={handleLogin}>
+        <S.FormCard onSubmit={handleLogin} autoComplete="on">
           <h2>Login</h2>
 
           <div className="input-group">
@@ -66,6 +66,8 @@ export function Login() {
               value={email}
               onChange={e => setEmail(e.target.value)}
               placeholder="Digite seu e-mail"
+              autoComplete="email"
+              name="email"
               required
             />
           </div>
@@ -77,6 +79,8 @@ export function Login() {
               value={password}
               onChange={e => setPassword(e.target.value)}
               placeholder="Digite sua senha"
+              autoComplete="current-password"
+              name="password"
               required
             />
           </div>

@@ -40,6 +40,10 @@ const STORAGE_USER_NAME_KEY = '@CodeWear:userName';
 
 const AuthContext = createContext<AuthContextData>({} as AuthContextData);
 
+function getStoredToken(): string | null {
+    return localStorage.getItem(STORAGE_TOKEN_KEY);
+}
+
 function getStoredUser(): AuthUser | null {
     const savedUser = localStorage.getItem(STORAGE_USER_KEY);
 
@@ -55,35 +59,51 @@ function getStoredUser(): AuthUser | null {
     }
 }
 
+function syncApiAuthorizationHeader(token: string | null): void {
+    if (token) {
+        api.defaults.headers.common.Authorization = `Bearer ${token}`;
+        return;
+    }
+
+    delete api.defaults.headers.common.Authorization;
+}
+
+function persistToken(token: string | null): void {
+    if (token) {
+        localStorage.setItem(STORAGE_TOKEN_KEY, token);
+        return;
+    }
+
+    localStorage.removeItem(STORAGE_TOKEN_KEY);
+}
+
+function persistUser(user: AuthUser | null): void {
+    if (user) {
+        localStorage.setItem(STORAGE_USER_KEY, JSON.stringify(user));
+        localStorage.setItem(STORAGE_USER_NAME_KEY, user.name);
+        return;
+    }
+
+    localStorage.removeItem(STORAGE_USER_KEY);
+    localStorage.removeItem(STORAGE_USER_NAME_KEY);
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
-    const [token, setToken] = useState<string | null>(() => localStorage.getItem(STORAGE_TOKEN_KEY));
+    const [token, setToken] = useState<string | null>(getStoredToken);
     const [user, setUser] = useState<AuthUser | null>(() => getStoredUser());
 
     useEffect(() => {
-        if (token) {
-            api.defaults.headers.common.Authorization = `Bearer ${token}`;
-            localStorage.setItem(STORAGE_TOKEN_KEY, token);
-            return;
-        }
-
-        delete api.defaults.headers.common.Authorization;
-        localStorage.removeItem(STORAGE_TOKEN_KEY);
+        syncApiAuthorizationHeader(token);
+        persistToken(token);
     }, [token]);
 
     useEffect(() => {
-        if (user) {
-            localStorage.setItem(STORAGE_USER_KEY, JSON.stringify(user));
-            localStorage.setItem(STORAGE_USER_NAME_KEY, user.name);
-            return;
-        }
-
-        localStorage.removeItem(STORAGE_USER_KEY);
-        localStorage.removeItem(STORAGE_USER_NAME_KEY);
+        persistUser(user);
     }, [user]);
 
     useEffect(() => {
         const syncAuthState = () => {
-            setToken(localStorage.getItem(STORAGE_TOKEN_KEY));
+            setToken(getStoredToken());
             setUser(getStoredUser());
         };
 

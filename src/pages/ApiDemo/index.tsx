@@ -1,7 +1,9 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { toast } from 'react-toastify';
 import { Button } from '../../components/Button';
+import { Pagination } from '../../components/Pagination';
 import { useAuth } from '../../hooks/useAuth';
 import { productsApi, usersApi, cartApi, ordersApi, auditApi } from '../../services/api';
 import { maskCPF, sanitizeCPF, validateCPF } from '../../utils/cpf';
@@ -26,6 +28,74 @@ type ApiDemoDataItem = Product | UserProfile | CartEntry | OrderSummary | AuditL
 
 type ApiErrorCandidate = Error | { response?: { data?: ApiErrorResponse } } | null | undefined;
 
+type ProductFormState = {
+    name: string;
+    price: string;
+    stock: string;
+    image_url: string;
+};
+
+type CartFormState = {
+    productId: string;
+    quantity: string;
+};
+
+type CartUpdateFormState = {
+    cartId: string;
+    quantity: string;
+};
+
+type UserFormState = {
+    name: string;
+    email: string;
+    password: string;
+    confirmPassword: string;
+    cpf: string;
+    phone: string;
+    address: string;
+};
+
+type ProfileFormState = {
+    name: string;
+    phone: string;
+    address: string;
+    password: string;
+};
+
+const EMPTY_PRODUCT_FORM: ProductFormState = {
+    name: '',
+    price: '',
+    stock: '',
+    image_url: ''
+};
+
+const EMPTY_CART_FORM: CartFormState = {
+    productId: '',
+    quantity: ''
+};
+
+const EMPTY_CART_UPDATE_FORM: CartUpdateFormState = {
+    cartId: '',
+    quantity: ''
+};
+
+const EMPTY_USER_FORM: UserFormState = {
+    name: '',
+    email: '',
+    password: '',
+    confirmPassword: '',
+    cpf: '',
+    phone: '',
+    address: ''
+};
+
+const EMPTY_PROFILE_FORM: ProfileFormState = {
+    name: '',
+    phone: '',
+    address: '',
+    password: ''
+};
+
 function getErrorMessage(error: ApiErrorCandidate, fallback: string): string {
     if (axios.isAxiosError<ApiErrorResponse>(error)) {
         return error.response?.data?.message || fallback;
@@ -34,62 +104,115 @@ function getErrorMessage(error: ApiErrorCandidate, fallback: string): string {
     return fallback;
 }
 
+function maskPhone(value: string): string {
+    return value
+        .replace(/\D/g, '')
+        .replace(/(\d{2})(\d)/, '($1) $2')
+        .replace(/(\d{5})(\d{1,4})/, '$1-$2')
+        .replace(/(-\d{4})\d+?$/, '$1');
+}
+
+function validateEmail(email: string): boolean {
+    const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return re.test(email);
+}
+
+function buildProductCreatePayload(productForm: ProductFormState) {
+    return {
+        name: productForm.name,
+        price: parseFloat(productForm.price),
+        description: 'Produto criado via API Demo',
+        image_url: productForm.image_url || 'https://via.placeholder.com/200',
+        stock: parseInt(productForm.stock)
+    };
+}
+
+function buildProductUpdatePayload(productForm: ProductFormState): ProductUpdateInput {
+    const updateData: ProductUpdateInput = {};
+
+    if (productForm.name) updateData.name = productForm.name;
+    if (productForm.price) updateData.price = parseFloat(productForm.price);
+    if (productForm.stock) updateData.stock = parseInt(productForm.stock);
+    if (productForm.image_url) updateData.image_url = productForm.image_url;
+
+    return updateData;
+}
+
+function buildUserCreatePayload(userForm: UserFormState) {
+    const { confirmPassword: _confirmPassword, ...rest } = userForm;
+
+    return {
+        ...rest,
+        cpf: sanitizeCPF(userForm.cpf),
+        phone: userForm.phone.replace(/\D/g, '')
+    };
+}
+
+function buildProfileUpdatePayload(profileForm: ProfileFormState): UserUpdateInput {
+    const updateData: UserUpdateInput = {};
+
+    if (profileForm.name) updateData.name = profileForm.name;
+    if (profileForm.phone) updateData.phone = profileForm.phone.replace(/\D/g, '');
+    if (profileForm.address) updateData.address = profileForm.address;
+    if (profileForm.password) updateData.password = profileForm.password;
+
+    return updateData;
+}
+
+function renderApiDemoData(loading: boolean, data: ApiDemoDataItem[]) {
+    if (loading) return <div>Carregando...</div>;
+    if (!data.length) return <div>Nenhum dado encontrado. Clique em uma ação para carregar dados.</div>;
+
+    return (
+        <div className="json-output">
+            <h3>Dados Carregados ({data.length} itens):</h3>
+            <pre>
+                {JSON.stringify(data, null, 2)}
+            </pre>
+        </div>
+    );
+}
+
 export function ApiDemo() {
-    const { updateUser } = useAuth();
+    const navigate = useNavigate();
+    const { signOut, updateUser } = useAuth();
     const [activeTab, setActiveTab] = useState<'products' | 'users' | 'cart' | 'orders' | 'audit'>('products');
     const [data, setData] = useState<ApiDemoDataItem[]>([]);
     const [loading, setLoading] = useState(false);
+    const [productPage, setProductPage] = useState(1);
+    const [productTotalPages, setProductTotalPages] = useState(1);
+    const [orderPage, setOrderPage] = useState(1);
+    const [orderTotalPages, setOrderTotalPages] = useState(1);
+    const [auditPage, setAuditPage] = useState(1);
+    const [auditTotalPages, setAuditTotalPages] = useState(1);
 
-    // Estados para inputs dos forms
-    const [productForm, setProductForm] = useState({
-        name: '',
-        price: '',
-        description: '',
-        stock: '',
-        image_url: ''
-    });
+    const [productForm, setProductForm] = useState<ProductFormState>(EMPTY_PRODUCT_FORM);
     const [updateProductId, setUpdateProductId] = useState('');
     const [deleteProductId, setDeleteProductId] = useState('');
-    const [cartForm, setCartForm] = useState({
-        productId: '',
-        quantity: ''
-    });
-    const [userForm, setUserForm] = useState({
-        name: '',
-        email: '',
-        password: '',
-        cpf: '',
-        phone: '',
-        address: ''
-    });
-    const [profileForm, setProfileForm] = useState({
-        name: '',
-        phone: '',
-        address: '',
-        password: ''
-    });
-
-    // ==================== VALIDAÇÕES E MÁSCARAS ====================
-    const maskPhone = (value: string) => {
-        return value
-            .replace(/\D/g, '')
-            .replace(/(\d{2})(\d)/, '($1) $2')
-            .replace(/(\d{5})(\d{1,4})/, '$1-$2')
-            .replace(/(-\d{4})\d+?$/, '$1');
-    };
-
-    const validateEmail = (email: string) => {
-        const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        return re.test(email);
-    };
+    const [cartForm, setCartForm] = useState<CartFormState>(EMPTY_CART_FORM);
+    const [cartUpdateForm, setCartUpdateForm] = useState<CartUpdateFormState>(EMPTY_CART_UPDATE_FORM);
+    const [userForm, setUserForm] = useState<UserFormState>(EMPTY_USER_FORM);
+    const [profileForm, setProfileForm] = useState<ProfileFormState>(EMPTY_PROFILE_FORM);
 
     // ==================== PRODUCTS CRUD DEMO ====================
-    const loadProducts = async () => {
+    const loadProducts = async (page = 1, showToast = true) => {
         setLoading(true);
         try {
-            const result = await productsApi.getAll({ limit: 5 });
-            setData(isProductsListResponse(result) ? result.products : result);
-            toast.success('✅ Produtos carregados com sucesso!');
+            const result = await productsApi.getAll({ page, limit: 5 });
+
+            if (isProductsListResponse(result)) {
+                setData(result.products);
+                setProductPage(page);
+                setProductTotalPages(result.totalPages || 1);
+            } else {
+                setData(result);
+                setProductPage(1);
+                setProductTotalPages(1);
+            }
+
+            if (showToast) {
+                toast.success('✅ Produtos carregados com sucesso!');
+            }
         } catch (error) {
             toast.error(`❌ Erro: ${getErrorMessage(error as ApiErrorCandidate, 'Erro ao carregar produtos')}`);
         } finally {
@@ -104,18 +227,10 @@ export function ApiDemo() {
         }
 
         try {
-            const newProduct = {
-                name: productForm.name,
-                price: parseFloat(productForm.price),
-                description: productForm.description || 'Produto criado via API Demo',
-                image_url: productForm.image_url || 'https://via.placeholder.com/200',
-                stock: parseInt(productForm.stock)
-            };
-            await productsApi.create(newProduct);
+            await productsApi.create(buildProductCreatePayload(productForm));
             toast.success('✅ Produto criado com sucesso!');
-            loadProducts();
-            // Limpar form
-            setProductForm({ name: '', price: '', description: '', stock: '', image_url: '' });
+            void loadProducts(productPage, false);
+            setProductForm(EMPTY_PRODUCT_FORM);
         } catch (error) {
             toast.error(`❌ Erro: ${getErrorMessage(error as ApiErrorCandidate, 'Erro ao criar produto')}`);
         }
@@ -128,12 +243,7 @@ export function ApiDemo() {
         }
 
         try {
-            const updateData: ProductUpdateInput = {};
-            if (productForm.name) updateData.name = productForm.name;
-            if (productForm.price) updateData.price = parseFloat(productForm.price);
-            if (productForm.description) updateData.description = productForm.description;
-            if (productForm.stock) updateData.stock = parseInt(productForm.stock);
-            if (productForm.image_url) updateData.image_url = productForm.image_url;
+            const updateData = buildProductUpdatePayload(productForm);
 
             if (Object.keys(updateData).length === 0) {
                 toast.error('❌ Preencha pelo menos um campo para atualizar!');
@@ -142,9 +252,9 @@ export function ApiDemo() {
 
             await productsApi.update(parseInt(updateProductId), updateData);
             toast.success('✅ Produto atualizado com sucesso!');
-            loadProducts();
+            void loadProducts(productPage, false);
             setUpdateProductId('');
-            setProductForm({ name: '', price: '', description: '', stock: '', image_url: '' });
+            setProductForm(EMPTY_PRODUCT_FORM);
         } catch (error) {
             toast.error(`❌ Erro: ${getErrorMessage(error as ApiErrorCandidate, 'Erro ao atualizar produto')}`);
         }
@@ -160,7 +270,8 @@ export function ApiDemo() {
         try {
             await productsApi.delete(parseInt(deleteProductId));
             toast.success('✅ Produto deletado com sucesso!');
-            loadProducts();
+            const nextPage = data.length === 1 && productPage > 1 ? productPage - 1 : productPage;
+            void loadProducts(nextPage, false);
             setDeleteProductId('');
         } catch (error) {
             toast.error(`❌ Erro: ${getErrorMessage(error as ApiErrorCandidate, 'Erro ao deletar produto')}`);
@@ -213,17 +324,15 @@ export function ApiDemo() {
             return;
         }
 
-        try {
-            const cleanCPF = sanitizeCPF(userForm.cpf);
-            const cleanPhone = userForm.phone.replace(/\D/g, '');
+        if (userForm.password !== userForm.confirmPassword) {
+            toast.error('❌ As senhas não coincidem!');
+            return;
+        }
 
-            await usersApi.create({
-                ...userForm,
-                cpf: cleanCPF,
-                phone: cleanPhone
-            });
+        try {
+            await usersApi.create(buildUserCreatePayload(userForm));
             toast.success('✅ Usuário criado com sucesso!');
-            setUserForm({ name: '', email: '', password: '', cpf: '', phone: '', address: '' });
+            setUserForm(EMPTY_USER_FORM);
         } catch (error) {
             toast.error(`❌ Erro: ${getErrorMessage(error as ApiErrorCandidate, 'Erro ao criar usuário')}`);
         }
@@ -247,21 +356,14 @@ export function ApiDemo() {
         }
 
         try {
-            const updateData: UserUpdateInput = {};
-            if (profileForm.name) updateData.name = profileForm.name;
-            if (profileForm.phone) updateData.phone = profileForm.phone.replace(/\D/g, '');
-            if (profileForm.address) updateData.address = profileForm.address;
-            if (profileForm.password) updateData.password = profileForm.password;
+            await usersApi.updateProfile(buildProfileUpdatePayload(profileForm));
 
-            await usersApi.updateProfile(updateData);
-
-            // Busca o perfil atualizado e atualiza o localStorage
             const refreshedUser = await usersApi.getProfile();
             updateUser(refreshedUser);
 
             toast.success('✅ Perfil atualizado com sucesso!');
-            loadProfile();
-            setProfileForm({ name: '', phone: '', address: '', password: '' });
+            void loadProfile();
+            setProfileForm(EMPTY_PROFILE_FORM);
         } catch (error) {
             toast.error(`❌ Erro: ${getErrorMessage(error as ApiErrorCandidate, 'Erro ao atualizar perfil')}`);
         }
@@ -293,10 +395,33 @@ export function ApiDemo() {
                 quantity: parseInt(cartForm.quantity)
             });
             toast.success('✅ Item adicionado ao carrinho!');
-            loadCart();
-            setCartForm({ productId: '', quantity: '' });
+            void loadCart();
+            setCartForm(EMPTY_CART_FORM);
         } catch (error) {
             toast.error(`❌ Erro: ${getErrorMessage(error as ApiErrorCandidate, 'Erro ao adicionar item')}`);
+        }
+    };
+
+    const updateCartItem = async () => {
+        if (!cartUpdateForm.cartId || !cartUpdateForm.quantity) {
+            toast.error('❌ Preencha o ID do item do carrinho e a nova quantidade!');
+            return;
+        }
+
+        if (parseInt(cartUpdateForm.quantity) <= 0) {
+            toast.error('❌ A quantidade deve ser maior que zero!');
+            return;
+        }
+
+        try {
+            await cartApi.updateItem(parseInt(cartUpdateForm.cartId), {
+                quantity: parseInt(cartUpdateForm.quantity)
+            });
+            toast.success('✅ Item do carrinho atualizado com sucesso!');
+            void loadCart();
+            setCartUpdateForm(EMPTY_CART_UPDATE_FORM);
+        } catch (error) {
+            toast.error(`❌ Erro: ${getErrorMessage(error as ApiErrorCandidate, 'Erro ao atualizar item do carrinho')}`);
         }
     };
 
@@ -305,32 +430,24 @@ export function ApiDemo() {
         try {
             await cartApi.clear();
             toast.success('✅ Carrinho limpo com sucesso!');
-            loadCart();
+            void loadCart();
         } catch (error) {
             toast.error(`❌ Erro: ${getErrorMessage(error as ApiErrorCandidate, 'Erro ao limpar carrinho')}`);
         }
     };
 
     // ==================== ORDERS CRUD DEMO ====================
-    const loadMyOrders = async () => {
+    const loadMyOrders = async (page = 1, showToast = true) => {
         setLoading(true);
         try {
-            const result = await ordersApi.getMyOrders();
+            const result = await ordersApi.getMyOrders({ page });
             setData(result.orders);
-            toast.success('✅ Pedidos carregados com sucesso!');
-        } catch (error) {
-            toast.error(`❌ Erro: ${getErrorMessage(error as ApiErrorCandidate, 'Erro ao carregar pedidos')}`);
-        } finally {
-            setLoading(false);
-        }
-    };
+            setOrderPage(page);
+            setOrderTotalPages(result.totalPages || 1);
 
-    const loadAllOrders = async () => {
-        setLoading(true);
-        try {
-            const result = await ordersApi.getAll({ limit: 5 });
-            setData(result.orders);
-            toast.success('✅ Todos os pedidos carregados com sucesso!');
+            if (showToast) {
+                toast.success('✅ Pedidos carregados com sucesso!');
+            }
         } catch (error) {
             toast.error(`❌ Erro: ${getErrorMessage(error as ApiErrorCandidate, 'Erro ao carregar pedidos')}`);
         } finally {
@@ -339,12 +456,17 @@ export function ApiDemo() {
     };
 
     // ==================== AUDIT CRUD DEMO ====================
-    const loadAuditLogs = async () => {
+    const loadAuditLogs = async (page = 1, showToast = true) => {
         setLoading(true);
         try {
-            const result = await auditApi.getLogs({ limit: 5 });
+            const result = await auditApi.getLogs({ page, limit: 5 });
             setData(result.logs);
-            toast.success('✅ Logs de auditoria carregados com sucesso!');
+            setAuditPage(result.currentPage || page);
+            setAuditTotalPages(result.totalPages || 1);
+
+            if (showToast) {
+                toast.success('✅ Logs de auditoria carregados com sucesso!');
+            }
         } catch (error) {
             toast.error(`❌ Erro: ${getErrorMessage(error as ApiErrorCandidate, 'Erro ao carregar logs')}`);
         } finally {
@@ -352,23 +474,29 @@ export function ApiDemo() {
         }
     };
 
+    const cancelMyAccount = async () => {
+        const confirmed = window.confirm(
+            'Tem certeza que deseja cancelar sua conta? Seus pedidos continuarão registrados, mas seu acesso será encerrado.'
+        );
+
+        if (!confirmed) {
+            return;
+        }
+
+        try {
+            await usersApi.cancelMyAccount();
+            signOut();
+            setData([]);
+            toast.success('✅ Conta cancelada com sucesso!');
+            navigate('/login');
+        } catch (error) {
+            toast.error(`❌ Erro: ${getErrorMessage(error as ApiErrorCandidate, 'Erro ao cancelar conta')}`);
+        }
+    };
+
     const handleTabChange = (tab: typeof activeTab) => {
         setActiveTab(tab);
         setData([]);
-    };
-
-    const renderData = () => {
-        if (loading) return <div>Carregando...</div>;
-        if (!data.length) return <div>Nenhum dado encontrado. Clique em uma ação para carregar dados.</div>;
-
-        return (
-            <div className="json-output">
-                <h3>Dados Carregados ({data.length} itens):</h3>
-                <pre>
-                    {JSON.stringify(data, null, 2)}
-                </pre>
-            </div>
-        );
     };
 
     return (
@@ -442,13 +570,6 @@ export function ApiDemo() {
                                 <div className="fields-grid two-columns">
                                     <input
                                         type="text"
-                                        placeholder="Descrição"
-                                        value={productForm.description}
-                                        onChange={e => setProductForm({ ...productForm, description: e.target.value })}
-                                        style={{ padding: '8px', borderRadius: '4px', border: '1px solid #333', background: '#0a0a0a', color: '#fff' }}
-                                    />
-                                    <input
-                                        type="text"
                                         placeholder="URL da imagem"
                                         value={productForm.image_url}
                                         onChange={e => setProductForm({ ...productForm, image_url: e.target.value })}
@@ -497,13 +618,6 @@ export function ApiDemo() {
                                 <div className="fields-grid two-columns">
                                     <input
                                         type="text"
-                                        placeholder="Nova descrição (opcional)"
-                                        value={productForm.description}
-                                        onChange={e => setProductForm({ ...productForm, description: e.target.value })}
-                                        style={{ padding: '8px', borderRadius: '4px', border: '1px solid #333', background: '#0a0a0a', color: '#fff' }}
-                                    />
-                                    <input
-                                        type="text"
                                         placeholder="Nova URL da imagem (opcional)"
                                         value={productForm.image_url}
                                         onChange={e => setProductForm({ ...productForm, image_url: e.target.value })}
@@ -529,7 +643,15 @@ export function ApiDemo() {
                             </div>
 
                             <div className="button-row">
-                                <Button onClick={loadProducts}>📖 Listar Produtos</Button>
+                                <Button onClick={() => void loadProducts()}>📖 Listar Produtos</Button>
+                            </div>
+
+                            <div style={{ marginTop: '16px' }}>
+                                <Pagination
+                                    currentPage={productPage}
+                                    totalPages={productTotalPages}
+                                    onPageChange={(page) => void loadProducts(page, false)}
+                                />
                             </div>
                         </div>
                     )}
@@ -559,6 +681,13 @@ export function ApiDemo() {
                                         placeholder="Senha"
                                         value={userForm.password}
                                         onChange={e => setUserForm({ ...userForm, password: e.target.value })}
+                                        style={{ padding: '8px', borderRadius: '4px', border: '1px solid #333', background: '#0a0a0a', color: '#fff' }}
+                                    />
+                                    <input
+                                        type="password"
+                                        placeholder="Confirmar senha"
+                                        value={userForm.confirmPassword}
+                                        onChange={e => setUserForm({ ...userForm, confirmPassword: e.target.value })}
                                         style={{ padding: '8px', borderRadius: '4px', border: '1px solid #333', background: '#0a0a0a', color: '#fff' }}
                                     />
                                     <input
@@ -626,6 +755,14 @@ export function ApiDemo() {
                                 <Button onClick={updateProfile} style={{ background: '#f59e0b' }}>✏️ Atualizar Perfil</Button>
                             </div>
 
+                            <div className="action-card">
+                                <h4 style={{ color: '#ef4444', marginBottom: '10px' }}>🗑️ Cancelar Minha Conta</h4>
+                                <p style={{ color: '#a3a3a3', marginBottom: '12px', lineHeight: 1.5 }}>
+                                    Replica a ação existente na página de perfil: encerra o acesso da conta atual, preservando os pedidos já registrados.
+                                </p>
+                                <Button onClick={cancelMyAccount} style={{ background: '#ef4444' }}>🗑️ Cancelar Conta</Button>
+                            </div>
+
                             <div className="button-row">
                                 <Button onClick={loadUsers}>📖 Listar Usuários</Button>
                                 <Button onClick={loadProfile} style={{ background: '#3b82f6' }}>👤 Meu Perfil</Button>
@@ -657,6 +794,27 @@ export function ApiDemo() {
                                 <Button onClick={addToCart} style={{ background: '#10b981' }}>➕ Adicionar Item</Button>
                             </div>
 
+                            <div className="action-card">
+                                <h4 style={{ color: '#f59e0b', marginBottom: '10px' }}>✏️ Atualizar Item do Carrinho</h4>
+                                <div className="inline-fields">
+                                    <input
+                                        type="number"
+                                        placeholder="ID do item no carrinho"
+                                        value={cartUpdateForm.cartId}
+                                        onChange={e => setCartUpdateForm({ ...cartUpdateForm, cartId: e.target.value })}
+                                        style={{ padding: '8px', borderRadius: '4px', border: '1px solid #333', background: '#0a0a0a', color: '#fff', width: '160px' }}
+                                    />
+                                    <input
+                                        type="number"
+                                        placeholder="Nova quantidade"
+                                        value={cartUpdateForm.quantity}
+                                        onChange={e => setCartUpdateForm({ ...cartUpdateForm, quantity: e.target.value })}
+                                        style={{ padding: '8px', borderRadius: '4px', border: '1px solid #333', background: '#0a0a0a', color: '#fff', width: '130px' }}
+                                    />
+                                </div>
+                                <Button onClick={updateCartItem} style={{ background: '#f59e0b' }}>✏️ Atualizar Item</Button>
+                            </div>
+
                             <div className="button-row">
                                 <Button onClick={loadCart}>📖 Ver Carrinho</Button>
                                 <Button onClick={clearCart} style={{ background: '#ef4444' }}>🗑️ Limpar Carrinho</Button>
@@ -665,21 +823,40 @@ export function ApiDemo() {
                     )}
 
                     {activeTab === 'orders' && (
-                        <div className="button-row">
-                            <Button onClick={loadMyOrders}>📖 Meus Pedidos</Button>
-                            <Button onClick={loadAllOrders} style={{ background: '#f59e0b' }}>📊 Todos os Pedidos</Button>
+                        <div>
+                            <div className="button-row">
+                                <Button onClick={() => void loadMyOrders()}>📖 Meus Pedidos</Button>
+                            </div>
+
+                            <div style={{ marginTop: '16px' }}>
+                                <Pagination
+                                    currentPage={orderPage}
+                                    totalPages={orderTotalPages}
+                                    onPageChange={(page) => void loadMyOrders(page, false)}
+                                />
+                            </div>
                         </div>
                     )}
 
                     {activeTab === 'audit' && (
-                        <div className="button-row">
-                            <Button onClick={loadAuditLogs}>📊 Ver Logs</Button>
+                        <div>
+                            <div className="button-row">
+                                <Button onClick={() => void loadAuditLogs()}>📊 Ver Logs</Button>
+                            </div>
+
+                            <div style={{ marginTop: '16px' }}>
+                                <Pagination
+                                    currentPage={auditPage}
+                                    totalPages={auditTotalPages}
+                                    onPageChange={(page) => void loadAuditLogs(page, false)}
+                                />
+                            </div>
                         </div>
                     )}
                 </div>
 
                 {/* Data Display */}
-                {renderData()}
+                {renderApiDemoData(loading, data)}
             </S.Content>
         </S.Container>
     );

@@ -8,7 +8,7 @@ export const ProductCard = styled.div`
   transition: all 0.3s ease-in-out;
   display: flex;
   flex-direction: column;
-  height: 460px;
+  height: 440px;
 
   @media (max-width: 768px) {
     height: auto;
@@ -22,7 +22,7 @@ export const ProductCard = styled.div`
   }
 
   .image-container {
-    height: 230px;
+    height: 210px;
     overflow: hidden;
     background: #0d0d0d;
     position: relative;
@@ -44,7 +44,7 @@ export const ProductCard = styled.div`
   }
 
   .content {
-    padding: 15px;
+    padding: 14px;
     flex: 1;
     display: flex;
     flex-direction: column;
@@ -53,15 +53,11 @@ export const ProductCard = styled.div`
     h3 {
       color: #fff;
       font-size: 1.05rem;
-      margin-bottom: 4px;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
+      margin-bottom: 6px;
+      white-space: normal;
+      overflow-wrap: anywhere;
+      line-height: 1.35;
       font-weight: 700;
-
-      @media (max-width: 480px) {
-        white-space: normal;
-      }
     }
 
     .description {

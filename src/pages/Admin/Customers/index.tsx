@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { FiUsers, FiSearch, FiDownload } from 'react-icons/fi';
 import { toast } from 'react-toastify';
 import { Pagination } from '../../../components/Pagination';
@@ -9,7 +9,63 @@ import { usersApi } from '../../../services/api';
 import type { UserProfile } from '../../../types/api';
 import * as S from '../styles';
 
+type CustomersCacheEntry = {
+    users: UserProfile[];
+    totalPages: number;
+    totalItems: number;
+};
+
+const CSV_SEPARATOR = ' ; ';
+
+function getCustomersCacheKey(page: number, searchTerm: string): string {
+    return `${page}:${searchTerm.trim().toLowerCase()}`;
+}
+
+function formatCustomerCreatedAt(createdAt?: string): string {
+    return createdAt ? new Date(createdAt).toLocaleDateString('pt-BR') : '---';
+}
+
+function downloadCsvFile(content: string, fileName: string): void {
+    const blob = new Blob(['\ufeff' + content], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const fileUrl = URL.createObjectURL(blob);
+
+    link.href = fileUrl;
+    link.setAttribute('download', fileName);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(fileUrl);
+}
+
+function buildAllCustomersCsv(users: UserProfile[]): string {
+    const header = `NOME${' '.repeat(20)}${CSV_SEPARATOR}CPF${' '.repeat(15)}${CSV_SEPARATOR}EMAIL${' '.repeat(25)}${CSV_SEPARATOR}TELEFONE${CSV_SEPARATOR}CADASTRO\n`;
+
+    const rows = users.map((user) => {
+        const nome = (user.name || '').toUpperCase().padEnd(25, ' ');
+        const cpf = (user.cpf || '---').padEnd(18, ' ');
+        const email = (user.email || '').padEnd(30, ' ');
+        const fone = (user.phone || '---').padEnd(15, ' ');
+        const data = formatCustomerCreatedAt(user.createdAt);
+
+        return `${nome}${CSV_SEPARATOR}${cpf}${CSV_SEPARATOR}${email}${CSV_SEPARATOR}${fone}${CSV_SEPARATOR}${data}`;
+    }).join('\n');
+
+    return header + rows;
+}
+
+function buildCurrentPageCustomersCsv(users: UserProfile[]): string {
+    const header = `NOME${' '.repeat(15)}${CSV_SEPARATOR}CPF${' '.repeat(10)}${CSV_SEPARATOR}EMAIL${' '.repeat(20)}${CSV_SEPARATOR}CONTATO\n`;
+
+    const rows = users.map((user) => (
+        `${(user.name || '').padEnd(20, ' ')}${CSV_SEPARATOR}${(user.cpf || '').padEnd(15, ' ')}${CSV_SEPARATOR}${(user.email || '').padEnd(25, ' ')}${CSV_SEPARATOR}${user.phone || ''}`
+    )).join('\n');
+
+    return header + rows;
+}
+
 export function AdminCustomers() {
+    const usersCacheRef = useRef<Record<string, CustomersCacheEntry>>({});
     const [users, setUsers] = useState<UserProfile[]>([]);
     const [loading, setLoading] = useState(true);
     const [currentPage, setCurrentPage] = useState(1);
@@ -18,6 +74,18 @@ export function AdminCustomers() {
     const [search, setSearch] = useState('');
 
     const loadUsers = useCallback(async (page = 1, searchTerm = '') => {
+        const cacheKey = getCustomersCacheKey(page, searchTerm);
+
+        const cachedResponse = usersCacheRef.current[cacheKey];
+        if (cachedResponse) {
+            setUsers(cachedResponse.users);
+            setTotalPages(cachedResponse.totalPages);
+            setTotalItems(cachedResponse.totalItems);
+            setCurrentPage(page);
+            setLoading(false);
+            return;
+        }
+
         try {
             setLoading(true);
             const response = await usersApi.getAll({ page, limit: 5, search: searchTerm });
@@ -25,12 +93,18 @@ export function AdminCustomers() {
             const data = response.users || [];
             const totalReal = response.totalCount || response.count || 0;
 
+            usersCacheRef.current[cacheKey] = {
+                users: data,
+                totalPages: response.totalPages || 1,
+                totalItems: totalReal
+            };
+
             setUsers(data);
             setTotalPages(response.totalPages || 1);
             setTotalItems(totalReal);
             setCurrentPage(page);
-        } catch (err) {
-            console.error('Erro ao carregar clientes:', err);
+        } catch (error) {
+            console.error('Erro ao carregar clientes:', error);
         } finally {
             setLoading(false);
         }
@@ -56,26 +130,7 @@ export function AdminCustomers() {
                 return;
             }
 
-            const sep = ' ; ';
-            const header = `NOME${' '.repeat(20)}${sep}CPF${' '.repeat(15)}${sep}EMAIL${' '.repeat(25)}${sep}TELEFONE${sep}CADASTRO\n`;
-
-            const rows = allUsers.map((user) => {
-                const nome = (user.name || '').toUpperCase().padEnd(25, ' ');
-                const cpf = (user.cpf || '---').padEnd(18, ' ');
-                const email = (user.email || '').padEnd(30, ' ');
-                const fone = (user.phone || '---').padEnd(15, ' ');
-                const data = user.createdAt ? new Date(user.createdAt).toLocaleDateString('pt-BR') : '---';
-
-                return `${nome}${sep}${cpf}${sep}${email}${sep}${fone}${sep}${data}`;
-            }).join('\n');
-
-            const blob = new Blob(['\ufeff' + header + rows], { type: 'text/csv;charset=utf-8;' });
-            const link = document.createElement('a');
-            link.href = URL.createObjectURL(blob);
-            link.setAttribute('download', 'RELATORIO_GERAL_CLIENTES.csv');
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
+            downloadCsvFile(buildAllCustomersCsv(allUsers), 'RELATORIO_GERAL_CLIENTES.csv');
 
             toast.update(toastId, { render: 'Relatório Geral baixado!', type: 'success', isLoading: false, autoClose: 3000 });
         } catch {
@@ -84,20 +139,7 @@ export function AdminCustomers() {
     };
 
     const exportCurrentPageToCSV = () => {
-        const sep = ' ; ';
-        const header = `NOME${' '.repeat(15)}${sep}CPF${' '.repeat(10)}${sep}EMAIL${' '.repeat(20)}${sep}CONTATO\n`;
-
-        const rows = users.map((user) => {
-            return `${(user.name || '').padEnd(20, ' ')}${sep}${(user.cpf || '').padEnd(15, ' ')}${sep}${(user.email || '').padEnd(25, ' ')}${sep}${user.phone || ''}`;
-        }).join('\n');
-
-        const blob = new Blob(['\ufeff' + header + rows], { type: 'text/csv;charset=utf-8;' });
-        const link = document.createElement('a');
-        link.href = URL.createObjectURL(blob);
-        link.setAttribute('download', `clientes_pagina_${currentPage}.csv`);
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
+        downloadCsvFile(buildCurrentPageCustomersCsv(users), `clientes_pagina_${currentPage}.csv`);
 
         toast.success('Página exportada com sucesso!');
     };
@@ -160,7 +202,7 @@ export function AdminCustomers() {
                                     <td><InfoCard value={user.email || '---'} /></td>
                                     <td><InfoCard value={user.phone || '---'} /></td>
                                     <td><InfoCard value={user.address || '---'} /></td>
-                                    <td>{user.createdAt ? new Date(user.createdAt).toLocaleDateString('pt-BR') : '---'}</td>
+                                    <td>{formatCustomerCreatedAt(user.createdAt)}</td>
                                 </tr>
                             ))
                         ) : (
@@ -199,7 +241,7 @@ export function AdminCustomers() {
                                 </S.MobileField>
                                 <S.MobileField>
                                     <small>Cadastro</small>
-                                    <span>{user.createdAt ? new Date(user.createdAt).toLocaleDateString('pt-BR') : '---'}</span>
+                                    <span>{formatCustomerCreatedAt(user.createdAt)}</span>
                                 </S.MobileField>
                             </S.MobileFieldList>
                         </S.MobileCard>
