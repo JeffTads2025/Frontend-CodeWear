@@ -24,7 +24,7 @@ import type {
 } from '../types/api';
 
 const api = axios.create({
-  // Conforme o seu terminal, o servidor Node está aqui:
+  
   baseURL: 'http://localhost:3000',
 });
 
